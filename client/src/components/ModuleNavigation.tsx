@@ -46,17 +46,30 @@ export function ModuleNavigation({ modules, employee, onModuleStart, onAdminClic
               </div>
             </div>
 
-            <div className="text-center sm:text-right">
-              <div className="flex items-center justify-center sm:justify-end space-x-2 text-blue-200 mb-2">
-                <User className="h-4 w-4" />
-                <span className="text-sm">{employee.jobPosition}</span>
+            <div className="flex items-center gap-4">
+              <div className="text-center sm:text-right">
+                <div className="flex items-center justify-center sm:justify-end space-x-2 text-blue-200 mb-2">
+                  <User className="h-4 w-4" />
+                  <span className="text-sm">{employee.jobPosition}</span>
+                </div>
+                <div className="flex items-center justify-center sm:justify-end space-x-2 text-blue-200">
+                  <Calendar className="h-4 w-4" />
+                  <span className="text-sm">
+                    Iniciado em: {new Date(employee.registrationDate).toLocaleDateString('pt-BR')}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center justify-center sm:justify-end space-x-2 text-blue-200">
-                <Calendar className="h-4 w-4" />
-                <span className="text-sm">
-                  Iniciado em: {new Date(employee.registrationDate).toLocaleDateString('pt-BR')}
-                </span>
-              </div>
+              
+              {/* Botão Admin ao lado das credenciais */}
+              {onAdminClick && (
+                <button
+                  onClick={onAdminClick}
+                  className="p-3 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg hover:bg-white/20 transition-colors"
+                  title="Painel Administrativo"
+                >
+                  <Settings className="h-5 w-5 text-white" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -125,16 +138,7 @@ export function ModuleNavigation({ modules, employee, onModuleStart, onAdminClic
         </div>
       </div>
 
-      {/* Botão Admin no canto superior direito */}
-      {onAdminClick && (
-        <button
-          onClick={onAdminClick}
-          className="absolute top-6 right-6 p-3 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg hover:bg-white/20 transition-colors"
-          title="Painel Administrativo"
-        >
-          <Settings className="h-5 w-5 text-white" />
-        </button>
-      )}
+
 
       {completedCount === totalCount && (
         <div className="fixed bottom-4 sm:bottom-8 right-4 sm:right-8 bg-gradient-to-r from-green-600 to-green-500 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl shadow-2xl">

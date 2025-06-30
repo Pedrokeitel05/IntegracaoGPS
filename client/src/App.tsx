@@ -17,10 +17,20 @@ function App() {
     registerEmployee,
     completeModule,
     initializeModules,
+    updateModule,
+    addModule,
+    deleteModule,
   } = useOnboarding();
 
   const { isAdminMode, showLoginModal, login, logout, openLoginModal, closeLoginModal } = useAdmin();
   const [activeModule, setActiveModule] = useState<string | null>(null);
+
+  // Inicializar módulos quando o usuário fizer login
+  useEffect(() => {
+    if (employee && modules.length === 0) {
+      initializeModules(employee.jobPosition as any);
+    }
+  }, [employee, modules.length, initializeModules]);
 
   const handleStartOnboarding = () => {
     setCurrentStep('registration');
@@ -46,9 +56,16 @@ function App() {
     setActiveModule(null);
   };
 
-  const handleUpdateModules = (updatedModules: any[]) => {
-    // Atualizar os módulos através do hook useOnboarding se necessário
-    // Por enquanto, os módulos customizados são gerenciados pelo AdminDashboard
+  const handleUpdateModules = (moduleId: string, updates: Partial<any>) => {
+    updateModule(moduleId, updates);
+  };
+
+  const handleAddModule = (newModule: Omit<any, 'id'>) => {
+    addModule(newModule);
+  };
+
+  const handleDeleteModule = (moduleId: string) => {
+    deleteModule(moduleId);
   };
 
   // Se está no modo admin, mostrar o painel administrativo
@@ -56,8 +73,10 @@ function App() {
     return (
       <AdminDashboard
         onLogout={logout}
-        allModules={modules}
+        modules={modules}
         onUpdateModule={handleUpdateModules}
+        onAddModule={handleAddModule}
+        onDeleteModule={handleDeleteModule}
       />
     );
   }

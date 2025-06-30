@@ -5,9 +5,12 @@ import { Employee, Module, JobPosition } from '../types';
 export function useOnboarding() {
   const [employee, setEmployee] = useLocalStorage<Employee | null>('gps_employee', null);
   const [currentStep, setCurrentStep] = useLocalStorage<string>('gps_current_step', 'welcome');
-  const [modules, setModules] = useState<Module[]>([]);
+  const [modules, setModules] = useLocalStorage<Module[]>('gps_modules', []);
 
   const initializeModules = useCallback((jobPosition: JobPosition) => {
+    // Se já existem módulos salvos, não reinicializar
+    if (modules.length > 0) return;
+    
     const baseModules: Module[] = [
       {
         id: 'registration',
@@ -20,7 +23,7 @@ export function useOnboarding() {
         id: 'hr',
         title: 'Recursos Humanos',
         description: 'Políticas e procedimentos da empresa',
-        isLocked: !employee,
+        isLocked: false, // Primeiro módulo após registro deve estar desbloqueado
         isCompleted: employee?.completedModules.includes('hr') || false,
       },
       {
@@ -112,6 +115,24 @@ export function useOnboarding() {
     initializeModules(employeeData.jobPosition as JobPosition);
   }, [setEmployee, setCurrentStep, initializeModules]);
 
+  const updateModule = useCallback((moduleId: string, updates: Partial<Module>) => {
+    setModules(prev => prev.map(module => 
+      module.id === moduleId ? { ...module, ...updates } : module
+    ));
+  }, []);
+
+  const addModule = useCallback((newModule: Omit<Module, 'id'>) => {
+    const moduleWithId: Module = {
+      ...newModule,
+      id: Date.now().toString(),
+    };
+    setModules(prev => [...prev, moduleWithId]);
+  }, []);
+
+  const deleteModule = useCallback((moduleId: string) => {
+    setModules(prev => prev.filter(module => module.id !== moduleId));
+  }, []);
+
   return {
     employee,
     currentStep,
@@ -120,5 +141,8 @@ export function useOnboarding() {
     registerEmployee,
     completeModule,
     initializeModules,
+    updateModule,
+    addModule,
+    deleteModule,
   };
 }

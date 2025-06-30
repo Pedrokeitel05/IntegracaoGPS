@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { Settings, Plus, Edit, Trash2, Video, LogOut, Save } from 'lucide-react';
 import { Module } from '../types';
-import { useModuleManagement } from '../hooks/useModuleManagement';
 
 interface AdminDashboardProps {
   onLogout: () => void;
-  allModules: Module[];
-  onUpdateModule: (modules: Module[]) => void;
+  modules: Module[];
+  onUpdateModule: (moduleId: string, updates: Partial<Module>) => void;
+  onAddModule: (newModule: Omit<Module, 'id'>) => void;
+  onDeleteModule: (moduleId: string) => void;
 }
 
-export function AdminDashboard({ onLogout, allModules, onUpdateModule }: AdminDashboardProps) {
-  const { modules: customModules, addModule, updateModule, deleteModule } = useModuleManagement();
+export function AdminDashboard({ onLogout, modules, onUpdateModule, onAddModule, onDeleteModule }: AdminDashboardProps) {
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -19,32 +19,18 @@ export function AdminDashboard({ onLogout, allModules, onUpdateModule }: AdminDa
     videoUrl: '',
   });
 
-  // Combinar módulos padrão com customizados
-  const allModulesList = [...allModules, ...customModules];
-
   const handleSave = () => {
     if (editingModule) {
       // Atualizar módulo existente
-      if (allModules.find(m => m.id === editingModule.id)) {
-        // É um módulo padrão - atualizar na lista principal
-        const updatedModules = allModules.map(m => 
-          m.id === editingModule.id 
-            ? { ...m, title: formData.title, description: formData.description, videoUrl: formData.videoUrl }
-            : m
-        );
-        onUpdateModule(updatedModules);
-      } else {
-        // É um módulo customizado
-        updateModule(editingModule.id, {
-          title: formData.title,
-          description: formData.description,
-          videoUrl: formData.videoUrl,
-        });
-      }
+      onUpdateModule(editingModule.id, {
+        title: formData.title,
+        description: formData.description,
+        videoUrl: formData.videoUrl,
+      });
       setEditingModule(null);
     } else if (showAddForm) {
       // Adicionar novo módulo
-      addModule({
+      onAddModule({
         title: formData.title,
         description: formData.description,
         videoUrl: formData.videoUrl,
@@ -69,14 +55,7 @@ export function AdminDashboard({ onLogout, allModules, onUpdateModule }: AdminDa
 
   const handleDelete = (moduleId: string) => {
     if (window.confirm('Tem certeza que deseja excluir este módulo?')) {
-      if (allModules.find(m => m.id === moduleId)) {
-        // É um módulo padrão - removê-lo da lista principal
-        const updatedModules = allModules.filter(m => m.id !== moduleId);
-        onUpdateModule(updatedModules);
-      } else {
-        // É um módulo customizado
-        deleteModule(moduleId);
-      }
+      onDeleteModule(moduleId);
     }
   };
 
@@ -195,12 +174,12 @@ export function AdminDashboard({ onLogout, allModules, onUpdateModule }: AdminDa
         <div className="bg-white rounded-lg shadow-sm border">
           <div className="px-6 py-4 border-b">
             <h2 className="text-xl font-semibold text-gray-900">
-              Módulos ({allModulesList.length})
+              Módulos ({modules.length})
             </h2>
           </div>
 
           <div className="divide-y divide-gray-200">
-            {allModulesList.map((module) => (
+            {modules.map((module) => (
               <div key={module.id} className="px-6 py-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -245,7 +224,7 @@ export function AdminDashboard({ onLogout, allModules, onUpdateModule }: AdminDa
               </div>
             ))}
 
-            {allModulesList.length === 0 && (
+            {modules.length === 0 && (
               <div className="px-6 py-12 text-center text-gray-500">
                 Nenhum módulo encontrado. Adicione o primeiro módulo!
               </div>
