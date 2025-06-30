@@ -140,10 +140,20 @@ export function useOnboarding() {
   }, [setEmployee, setCurrentStep, initializeModules]);
 
   const updateModule = useCallback((moduleId: string, updates: Partial<Module>) => {
-    setModules(prev => prev.map(module => 
-      module.id === moduleId ? { ...module, ...updates } : module
-    ));
-  }, []);
+    console.log(`Updating module ${moduleId}:`, updates);
+    setModules(prev => {
+      const newModules = prev.map(module => {
+        if (module.id === moduleId) {
+          const updatedModule = { ...module, ...updates };
+          console.log(`Module ${moduleId} updated:`, { old: module, new: updatedModule });
+          return updatedModule;
+        }
+        return module;
+      });
+      console.log('All modules after update:', newModules);
+      return newModules;
+    });
+  }, [setModules]);
 
   const addModule = useCallback((newModule: Omit<Module, 'id'>) => {
     const moduleWithId: Module = {

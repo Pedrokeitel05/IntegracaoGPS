@@ -99,17 +99,17 @@ export function ModuleNavigation({ modules, employee, onModuleStart, onAdminClic
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-8 sm:mb-12">Módulos de Treinamento</h2>
 
-          <div className="relative overflow-visible py-8">
+          <div className="relative overflow-visible py-12">
             <div 
               ref={scrollContainerRef}
-              className="flex space-x-4 overflow-x-auto overflow-y-hidden scrollbar-hide pb-8 px-4 snap-x snap-mandatory relative z-0"
+              className="flex space-x-6 overflow-x-auto overflow-y-visible scrollbar-hide pb-12 px-8 snap-x snap-mandatory"
               style={{ 
                 scrollbarWidth: 'none', 
                 msOverflowStyle: 'none'
               }}
             >
               {filteredModules.map((module, index) => (
-                <div key={module.id} className="snap-center relative z-0 hover:z-10 overflow-visible">
+                <div key={module.id} className="snap-center flex-shrink-0 p-4">
                   <ModuleCard
                     module={module}
                     index={index}

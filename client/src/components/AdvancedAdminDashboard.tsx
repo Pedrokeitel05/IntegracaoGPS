@@ -125,32 +125,36 @@ export function AdvancedAdminDashboard({
   };
 
   const handleToggleLock = (module: Module) => {
-    onUpdateModule(module.id, { isLocked: !module.isLocked });
+    const newLockState = !module.isLocked;
+    console.log(`Toggling lock for module ${module.id}: ${module.isLocked} -> ${newLockState}`);
+    onUpdateModule(module.id, { isLocked: newLockState });
   };
 
   const handleMoveUp = (module: Module) => {
     const currentIndex = sortedModules.findIndex(m => m.id === module.id);
+    console.log(`Moving up module ${module.id}, current index: ${currentIndex}`);
+    
     if (currentIndex > 0) {
-      const newModules = [...sortedModules];
-      // Trocar posições
-      [newModules[currentIndex], newModules[currentIndex - 1]] = [newModules[currentIndex - 1], newModules[currentIndex]];
-      // Atualizar orders
-      newModules.forEach((mod, index) => {
-        onUpdateModule(mod.id, { order: index + 1 });
-      });
+      const targetModule = sortedModules[currentIndex - 1];
+      console.log(`Swapping orders: ${module.id} (${module.order}) with ${targetModule.id} (${targetModule.order})`);
+      
+      // Trocar apenas os orders dos dois módulos
+      onUpdateModule(module.id, { order: targetModule.order });
+      onUpdateModule(targetModule.id, { order: module.order });
     }
   };
 
   const handleMoveDown = (module: Module) => {
     const currentIndex = sortedModules.findIndex(m => m.id === module.id);
+    console.log(`Moving down module ${module.id}, current index: ${currentIndex}`);
+    
     if (currentIndex < sortedModules.length - 1) {
-      const newModules = [...sortedModules];
-      // Trocar posições
-      [newModules[currentIndex], newModules[currentIndex + 1]] = [newModules[currentIndex + 1], newModules[currentIndex]];
-      // Atualizar orders
-      newModules.forEach((mod, index) => {
-        onUpdateModule(mod.id, { order: index + 1 });
-      });
+      const targetModule = sortedModules[currentIndex + 1];
+      console.log(`Swapping orders: ${module.id} (${module.order}) with ${targetModule.id} (${targetModule.order})`);
+      
+      // Trocar apenas os orders dos dois módulos
+      onUpdateModule(module.id, { order: targetModule.order });
+      onUpdateModule(targetModule.id, { order: module.order });
     }
   };
 
