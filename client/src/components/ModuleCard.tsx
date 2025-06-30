@@ -56,7 +56,7 @@ export function ModuleCard({ module, index, onStart }: ModuleCardProps) {
         </div>
 
         <h3
-          className={`text-lg sm:text-xl font-bold text-center mb-3 leading-tight ${
+          className={`text-base sm:text-lg md:text-xl font-bold text-center mb-2 sm:mb-3 leading-tight px-2 ${
             module.isLocked ? 'text-gray-400' : 'text-white'
           }`}
         >
@@ -64,7 +64,7 @@ export function ModuleCard({ module, index, onStart }: ModuleCardProps) {
         </h3>
 
         <p
-          className={`text-center text-sm mb-4 flex-grow ${
+          className={`text-center text-xs sm:text-sm mb-3 sm:mb-4 flex-grow px-2 leading-relaxed ${
             module.isLocked ? 'text-gray-500' : 'text-blue-200'
           }`}
         >

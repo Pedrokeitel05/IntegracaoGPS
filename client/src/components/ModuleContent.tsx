@@ -164,8 +164,20 @@ export function ModuleContent({ moduleId, onComplete, onBack }: ModuleContentPro
 
   const handleFullscreen = () => {
     if (iframeRef.current) {
-      if (iframeRef.current.requestFullscreen) {
-        iframeRef.current.requestFullscreen();
+      const iframe = iframeRef.current as any;
+      const requestFullscreen = iframe.requestFullscreen || 
+                               iframe.webkitRequestFullscreen || 
+                               iframe.mozRequestFullScreen || 
+                               iframe.msRequestFullscreen;
+      
+      if (requestFullscreen) {
+        requestFullscreen.call(iframe);
+      } else if (playerRef.current && playerRef.current.getIframe) {
+        // Fallback para YouTube API
+        const youtubeIframe = playerRef.current.getIframe();
+        if (youtubeIframe.requestFullscreen) {
+          youtubeIframe.requestFullscreen();
+        }
       }
     }
   };
@@ -189,22 +201,23 @@ export function ModuleContent({ moduleId, onComplete, onBack }: ModuleContentPro
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
       {/* Cabeçalho */}
       <div className="bg-black/20 backdrop-blur-lg border-b border-white/10">
-        <div className="max-w-6xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
             <button
               onClick={onBack}
-              className="flex items-center space-x-2 text-blue-200 hover:text-white transition-colors duration-300"
+              className="flex items-center space-x-2 text-blue-200 hover:text-white transition-colors duration-300 text-sm sm:text-base"
             >
-              <ArrowLeft className="h-5 w-5" />
-              <span>Voltar aos Módulos</span>
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Voltar aos Módulos</span>
+              <span className="sm:hidden">Voltar</span>
             </button>
             
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-white">{moduleData.title}</h1>
-              <p className="text-blue-200">{moduleData.description}</p>
+            <div className="text-center flex-1 sm:flex-none">
+              <h1 className="text-lg sm:text-2xl font-bold text-white">{moduleData.title}</h1>
+              <p className="text-blue-200 text-sm sm:text-base hidden sm:block">{moduleData.description}</p>
             </div>
 
-            <div className="text-right">
+            <div className="text-right w-full sm:w-auto">
               <div className="text-blue-200 text-sm">
                 Progresso: {Math.round(progressPercentage)}%
               </div>
@@ -244,52 +257,53 @@ export function ModuleContent({ moduleId, onComplete, onBack }: ModuleContentPro
                   ></div>
                   
                   {/* Overlay de controles customizados */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 pointer-events-auto">
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-3 sm:p-4 pointer-events-auto">
                     {/* Barra de Progresso do Vídeo */}
-                    <div className="w-full bg-white/20 rounded-full h-1 mb-3">
+                    <div className="w-full bg-white/20 rounded-full h-1 sm:h-1.5 mb-2 sm:mb-3">
                       <div 
-                        className="bg-red-500 h-1 rounded-full transition-all duration-300"
+                        className="bg-red-500 h-1 sm:h-1.5 rounded-full transition-all duration-300"
                         style={{ width: `${progressPercentage}%` }}
                       ></div>
                     </div>
                     
                     {/* Controles */}
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2 sm:space-x-4">
                         <button
                           onClick={handlePlayPause}
                           disabled={isVideoCompleted}
-                          className="text-white hover:text-blue-400 transition-colors duration-300 disabled:opacity-50"
+                          className="text-white hover:text-blue-400 transition-colors duration-300 disabled:opacity-50 p-1"
                         >
-                          {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                          {isPlaying ? <Pause className="h-5 w-5 sm:h-6 sm:w-6" /> : <Play className="h-5 w-5 sm:h-6 sm:w-6" />}
                         </button>
                         
                         <button
                           onClick={handleMute}
-                          className="text-white hover:text-blue-400 transition-colors duration-300"
+                          className="text-white hover:text-blue-400 transition-colors duration-300 p-1"
                         >
-                          {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+                          {isMuted ? <VolumeX className="h-5 w-5 sm:h-6 sm:w-6" /> : <Volume2 className="h-5 w-5 sm:h-6 sm:w-6" />}
                         </button>
                         
-                        <span className="text-white text-sm">
+                        <span className="text-white text-xs sm:text-sm">
                           {formatTime(currentTime)} / {formatTime(duration)}
                         </span>
                       </div>
                       
-                      <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2 sm:space-x-4">
                         {isVideoCompleted && (
-                          <div className="flex items-center space-x-2 text-green-400">
-                            <CheckCircle className="h-5 w-5" />
-                            <span className="text-sm font-medium">Vídeo Concluído</span>
+                          <div className="flex items-center space-x-1 sm:space-x-2 text-green-400">
+                            <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+                            <span className="text-xs sm:text-sm font-medium hidden sm:inline">Vídeo Concluído</span>
+                            <span className="text-xs font-medium sm:hidden">OK</span>
                           </div>
                         )}
                         
                         <button
                           onClick={handleFullscreen}
-                          className="text-white hover:text-blue-400 transition-colors duration-300"
+                          className="text-white hover:text-blue-400 transition-colors duration-300 p-1"
                           title="Tela Cheia"
                         >
-                          <Maximize className="h-6 w-6" />
+                          <Maximize className="h-5 w-5 sm:h-6 sm:w-6" />
                         </button>
                       </div>
                     </div>
@@ -299,47 +313,47 @@ export function ModuleContent({ moduleId, onComplete, onBack }: ModuleContentPro
             </div>
 
             {/* Informações do Módulo */}
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-white mb-4">
+            <div className="text-center mb-6 sm:mb-8 px-4">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">
                 Vídeo de Treinamento - {moduleData.title}
               </h2>
-              <p className="text-blue-200 mb-6">
+              <p className="text-blue-200 mb-4 sm:mb-6 text-sm sm:text-base">
                 Assista ao vídeo completo para prosseguir para o próximo módulo.
               </p>
               
               {!isVideoCompleted && (
-                <div className="bg-blue-900/30 rounded-xl p-4 border border-blue-500/30">
-                  <p className="text-blue-100 text-sm">
+                <div className="bg-blue-900/30 rounded-xl p-3 sm:p-4 border border-blue-500/30">
+                  <p className="text-blue-100 text-xs sm:text-sm">
                     ⚠️ Você deve assistir ao vídeo completo para desbloquear o próximo módulo.
-                    Os controles de velocidade e avanço estão desabilitados.
+                    <span className="hidden sm:inline"> Os controles de velocidade e avanço estão desabilitados.</span>
                   </p>
                 </div>
               )}
             </div>
 
             {/* Botão de Conclusão */}
-            <div className="flex justify-center">
+            <div className="flex justify-center px-4">
               <button
                 onClick={handleComplete}
                 disabled={!isVideoCompleted}
-                className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 disabled:from-gray-600 disabled:to-gray-500 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed flex items-center space-x-2"
+                className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 disabled:from-gray-600 disabled:to-gray-500 text-white px-6 sm:px-8 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed flex items-center space-x-2 text-sm sm:text-base w-full sm:w-auto max-w-xs sm:max-w-none"
               >
                 <span>Concluir Módulo</span>
-                <CheckCircle className="h-5 w-5" />
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
             </div>
           </div>
         ) : (
-          <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 shadow-2xl text-center">
-            <div className="flex justify-center mb-6">
-              <CheckCircle className="h-16 w-16 text-green-400" />
+          <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 sm:p-8 border border-white/20 shadow-2xl text-center mx-4">
+            <div className="flex justify-center mb-4 sm:mb-6">
+              <CheckCircle className="h-12 w-12 sm:h-16 sm:w-16 text-green-400" />
             </div>
-            <h2 className="text-3xl font-bold text-white mb-4">Módulo Concluído!</h2>
-            <p className="text-blue-200 mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4">Módulo Concluído!</h2>
+            <p className="text-blue-200 mb-6 sm:mb-8 text-sm sm:text-base">
               Parabéns! Você concluiu com sucesso o módulo {moduleData.title}.
             </p>
             <div className="animate-pulse">
-              <p className="text-green-400 font-medium">Redirecionando...</p>
+              <p className="text-green-400 font-medium text-sm sm:text-base">Redirecionando...</p>
             </div>
           </div>
         )}

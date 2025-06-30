@@ -67,7 +67,7 @@ export function useOnboarding() {
         isLocked: !employee?.completedModules.includes('hr'),
         isCompleted: employee?.completedModules.includes('quality') || false,
         order: 3,
-        targetAreas: ['Administrativo', 'Gerência', 'Técnico'],
+        targetAreas: ['Segurança/Recepção', 'Limpeza Geral', 'Limpeza Hospitalar', 'Administrativo', 'Gerência', 'Técnico', 'Outros'],
         isCustom: false,
       },
       {
@@ -77,7 +77,7 @@ export function useOnboarding() {
         isLocked: !employee?.completedModules.includes('quality'),
         isCompleted: employee?.completedModules.includes('safety') || false,
         order: 4,
-        targetAreas: ['Segurança/Recepção', 'Limpeza Geral', 'Limpeza Hospitalar', 'Técnico'],
+        targetAreas: ['Segurança/Recepção', 'Limpeza Geral', 'Limpeza Hospitalar', 'Administrativo', 'Gerência', 'Técnico', 'Outros'],
         isCustom: false,
       },
       {

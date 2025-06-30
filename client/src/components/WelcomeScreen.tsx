@@ -30,32 +30,32 @@ export function WelcomeScreen({ onStart, onAdminClick }: WelcomeScreenProps) {
             <span className="block text-blue-400 mt-2">GPS Group</span>
           </h1>
           
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-xl text-blue-100 mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed px-4">
             Inicie sua jornada conosco através do nosso programa abrangente de integração. 
             Vamos guiá-lo através de tudo que você precisa saber para ter sucesso em sua nova função.
           </p>
           
-          <div className="space-y-4 text-blue-200 mb-10">
+          <div className="space-y-3 sm:space-y-4 text-blue-200 mb-8 sm:mb-10 px-4">
             <div className="flex items-center justify-center space-x-3">
-              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-              <span>Complete seu cadastro</span>
+              <div className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0"></div>
+              <span className="text-sm sm:text-base">Complete seu cadastro</span>
             </div>
             <div className="flex items-center justify-center space-x-3">
-              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-              <span>Aprenda nossas políticas e procedimentos</span>
+              <div className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0"></div>
+              <span className="text-sm sm:text-base">Aprenda nossas políticas e procedimentos</span>
             </div>
             <div className="flex items-center justify-center space-x-3">
-              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-              <span>Acesse treinamentos específicos da sua função</span>
+              <div className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0"></div>
+              <span className="text-sm sm:text-base">Acesse treinamentos específicos da sua função</span>
             </div>
           </div>
           
           <button
             onClick={onStart}
-            className="group bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-12 py-4 rounded-2xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-xl flex items-center space-x-3 mx-auto"
+            className="group bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-8 sm:px-12 py-3 sm:py-4 rounded-2xl text-base sm:text-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-xl flex items-center space-x-3 mx-auto"
           >
             <span>Iniciar Integração</span>
-            <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+            <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform duration-300" />
           </button>
         </div>
         
@@ -68,10 +68,10 @@ export function WelcomeScreen({ onStart, onAdminClick }: WelcomeScreenProps) {
       {onAdminClick && (
         <button
           onClick={onAdminClick}
-          className="absolute top-6 right-6 p-3 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg hover:bg-white/20 transition-colors"
+          className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 sm:p-3 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg hover:bg-white/20 transition-colors"
           title="Painel Administrativo"
         >
-          <Settings className="h-5 w-5 text-white" />
+          <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
         </button>
       )}
     </div>
