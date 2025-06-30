@@ -20,6 +20,7 @@ function App() {
     updateModule,
     addModule,
     deleteModule,
+    reorderModules,
   } = useOnboarding();
 
   const { isAdminMode, showLoginModal, login, logout, openLoginModal, closeLoginModal } = useAdmin();
@@ -56,32 +57,16 @@ function App() {
     setActiveModule(null);
   };
 
-  const handleUpdateModules = (moduleId: string, updates: Partial<any>) => {
-    updateModule(moduleId, updates);
-  };
-
-  const handleAddModule = (newModule: Omit<any, 'id'>) => {
-    addModule(newModule);
-  };
-
-  const handleDeleteModule = (moduleId: string) => {
-    deleteModule(moduleId);
-  };
-
   // Se está no modo admin, mostrar o painel administrativo
   if (isAdminMode) {
     return (
       <AdvancedAdminDashboard
         onLogout={logout}
         modules={modules}
-        onUpdateModule={handleUpdateModules}
-        onAddModule={handleAddModule}
-        onDeleteModule={handleDeleteModule}
-        onReorderModules={(reorderedModules) => {
-          reorderedModules.forEach((module, index) => {
-            handleUpdateModules(module.id, { order: index + 1 });
-          });
-        }}
+        onUpdateModule={updateModule}
+        onAddModule={addModule}
+        onDeleteModule={deleteModule}
+        onReorderModules={reorderModules}
       />
     );
   }

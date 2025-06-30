@@ -45,7 +45,7 @@ export function ModuleCard({ module, index, onStart }: ModuleCardProps) {
         relative flex-shrink-0 rounded-2xl border backdrop-blur-lg shadow-2xl transition-all duration-300
         w-72 h-80 sm:w-80 sm:h-96 lg:w-72 lg:h-80 xl:w-80 xl:h-96
         ${getCardStyles()}
-        ${isClickable ? 'hover:shadow-2xl hover:scale-105 cursor-pointer hover:z-10' : 'cursor-default'}
+        ${isClickable ? 'hover:shadow-2xl hover:shadow-blue-500/40 cursor-pointer' : 'cursor-default'}
       `}
       style={{ transformOrigin: 'bottom center' }}
       onClick={handleCardClick}

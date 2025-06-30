@@ -167,6 +167,17 @@ export function useOnboarding() {
     setModules(prev => prev.filter(module => module.id !== moduleId));
   }, []);
 
+  const reorderModules = useCallback((reorderedModules: Module[]) => {
+    // Atualizar os orders baseado na nova posição
+    const modulesWithNewOrder = reorderedModules.map((module, index) => ({
+      ...module,
+      order: index
+    }));
+    
+    console.log('Reordering modules:', modulesWithNewOrder.map(m => ({ id: m.id, order: m.order })));
+    setModules(modulesWithNewOrder);
+  }, [setModules]);
+
   return {
     employee,
     currentStep,
@@ -178,5 +189,6 @@ export function useOnboarding() {
     updateModule,
     addModule,
     deleteModule,
+    reorderModules,
   };
 }

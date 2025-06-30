@@ -135,12 +135,14 @@ export function AdvancedAdminDashboard({
     console.log(`Moving up module ${module.id}, current index: ${currentIndex}`);
     
     if (currentIndex > 0) {
-      const targetModule = sortedModules[currentIndex - 1];
-      console.log(`Swapping orders: ${module.id} (${module.order}) with ${targetModule.id} (${targetModule.order})`);
+      const newModules = [...sortedModules];
+      // Trocar posições no array
+      [newModules[currentIndex - 1], newModules[currentIndex]] = [newModules[currentIndex], newModules[currentIndex - 1]];
       
-      // Trocar apenas os orders dos dois módulos
-      onUpdateModule(module.id, { order: targetModule.order });
-      onUpdateModule(targetModule.id, { order: module.order });
+      // Reordenar usando a função do hook
+      if (onReorderModules) {
+        onReorderModules(newModules);
+      }
     }
   };
 
@@ -149,12 +151,14 @@ export function AdvancedAdminDashboard({
     console.log(`Moving down module ${module.id}, current index: ${currentIndex}`);
     
     if (currentIndex < sortedModules.length - 1) {
-      const targetModule = sortedModules[currentIndex + 1];
-      console.log(`Swapping orders: ${module.id} (${module.order}) with ${targetModule.id} (${targetModule.order})`);
+      const newModules = [...sortedModules];
+      // Trocar posições no array
+      [newModules[currentIndex], newModules[currentIndex + 1]] = [newModules[currentIndex + 1], newModules[currentIndex]];
       
-      // Trocar apenas os orders dos dois módulos
-      onUpdateModule(module.id, { order: targetModule.order });
-      onUpdateModule(targetModule.id, { order: module.order });
+      // Reordenar usando a função do hook
+      if (onReorderModules) {
+        onReorderModules(newModules);
+      }
     }
   };
 
