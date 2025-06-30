@@ -104,6 +104,9 @@ export function AdvancedAdminDashboard({
       order: module.order,
     });
     setShowAddForm(false);
+    
+    // Scroll para o topo da página
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = (moduleId: string) => {

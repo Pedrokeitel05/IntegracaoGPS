@@ -1,11 +1,39 @@
 import { useState, useCallback } from 'react';
 import { useLocalStorage } from './useLocalStorage';
+import { useWebSocket } from './useWebSocket';
 import { Employee, Module, JobPosition } from '../types';
 
 export function useOnboarding() {
   const [employee, setEmployee] = useLocalStorage<Employee | null>('gps_employee', null);
   const [currentStep, setCurrentStep] = useLocalStorage<string>('gps_current_step', 'welcome');
   const [modules, setModules] = useLocalStorage<Module[]>('gps_modules', []);
+
+  // WebSocket para sincronização em tempo real
+  const {
+    broadcastModuleUpdate,
+    broadcastModulesReorder,
+    broadcastModuleAdd,
+    broadcastModuleDelete
+  } = useWebSocket({
+    onModuleUpdate: (moduleId, updates) => {
+      console.log('Received module update via WebSocket:', moduleId, updates);
+      setModules(prev => prev.map(module => 
+        module.id === moduleId ? { ...module, ...updates } : module
+      ));
+    },
+    onModulesReorder: (newModules) => {
+      console.log('Received modules reorder via WebSocket:', newModules);
+      setModules(newModules);
+    },
+    onModuleAdd: (newModule) => {
+      console.log('Received module add via WebSocket:', newModule);
+      setModules(prev => [...prev, newModule]);
+    },
+    onModuleDelete: (moduleId) => {
+      console.log('Received module delete via WebSocket:', moduleId);
+      setModules(prev => prev.filter(module => module.id !== moduleId));
+    }
+  });
 
   const initializeModules = useCallback((jobPosition: JobPosition) => {
     // Se já existem módulos salvos, não reinicializar
@@ -151,9 +179,13 @@ export function useOnboarding() {
         return module;
       });
       console.log('All modules after update:', newModules);
+      
+      // Broadcast change via WebSocket
+      broadcastModuleUpdate(moduleId, updates);
+      
       return newModules;
     });
-  }, [setModules]);
+  }, [setModules, broadcastModuleUpdate]);
 
   const addModule = useCallback((newModule: Omit<Module, 'id'>) => {
     const moduleWithId: Module = {
@@ -161,11 +193,17 @@ export function useOnboarding() {
       id: Date.now().toString(),
     };
     setModules(prev => [...prev, moduleWithId]);
-  }, []);
+    
+    // Broadcast change via WebSocket
+    broadcastModuleAdd(moduleWithId);
+  }, [broadcastModuleAdd]);
 
   const deleteModule = useCallback((moduleId: string) => {
     setModules(prev => prev.filter(module => module.id !== moduleId));
-  }, []);
+    
+    // Broadcast change via WebSocket
+    broadcastModuleDelete(moduleId);
+  }, [broadcastModuleDelete]);
 
   const reorderModules = useCallback((reorderedModules: Module[]) => {
     // Atualizar os orders baseado na nova posição
@@ -176,7 +214,10 @@ export function useOnboarding() {
     
     console.log('Reordering modules:', modulesWithNewOrder.map(m => ({ id: m.id, order: m.order })));
     setModules(modulesWithNewOrder);
-  }, [setModules]);
+    
+    // Broadcast change via WebSocket
+    broadcastModulesReorder(modulesWithNewOrder);
+  }, [setModules, broadcastModulesReorder]);
 
   return {
     employee,
