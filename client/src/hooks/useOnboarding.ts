@@ -18,6 +18,9 @@ export function useOnboarding() {
         description: 'Complete seu cadastro',
         isLocked: false,
         isCompleted: !!employee,
+        order: 1,
+        targetAreas: ['Segurança/Recepção', 'Limpeza Geral', 'Limpeza Hospitalar', 'Administrativo', 'Gerência', 'Técnico', 'Outros'],
+        isCustom: false,
       },
       {
         id: 'hr',
@@ -25,6 +28,9 @@ export function useOnboarding() {
         description: 'Políticas e procedimentos da empresa',
         isLocked: false, // Primeiro módulo após registro deve estar desbloqueado
         isCompleted: employee?.completedModules.includes('hr') || false,
+        order: 2,
+        targetAreas: ['Segurança/Recepção', 'Limpeza Geral', 'Limpeza Hospitalar', 'Administrativo', 'Gerência', 'Técnico', 'Outros'],
+        isCustom: false,
       },
       {
         id: 'quality',
@@ -32,6 +38,9 @@ export function useOnboarding() {
         description: 'Padrões e processos de qualidade',
         isLocked: !employee?.completedModules.includes('hr'),
         isCompleted: employee?.completedModules.includes('quality') || false,
+        order: 3,
+        targetAreas: ['Administrativo', 'Gerência', 'Técnico'],
+        isCustom: false,
       },
       {
         id: 'safety',
@@ -39,6 +48,9 @@ export function useOnboarding() {
         description: 'Protocolos de segurança e diretrizes ambientais',
         isLocked: !employee?.completedModules.includes('quality'),
         isCompleted: employee?.completedModules.includes('safety') || false,
+        order: 4,
+        targetAreas: ['Segurança/Recepção', 'Limpeza Geral', 'Limpeza Hospitalar', 'Técnico'],
+        isCustom: false,
       },
       {
         id: 'benefits',
@@ -46,6 +58,9 @@ export function useOnboarding() {
         description: 'Benefícios e remuneração dos funcionários',
         isLocked: !employee?.completedModules.includes('safety'),
         isCompleted: employee?.completedModules.includes('benefits') || false,
+        order: 5,
+        targetAreas: ['Segurança/Recepção', 'Limpeza Geral', 'Limpeza Hospitalar', 'Administrativo', 'Gerência', 'Técnico', 'Outros'],
+        isCustom: false,
       },
     ];
 
@@ -57,6 +72,9 @@ export function useOnboarding() {
         description: 'Protocolos de segurança e proteção de ativos',
         isLocked: !employee?.completedModules.includes('benefits'),
         isCompleted: employee?.completedModules.includes('asset-protection') || false,
+        order: 6,
+        targetAreas: ['Segurança/Recepção'],
+        isCustom: false,
       });
     } else if (jobPosition === 'Limpeza Geral') {
       baseModules.push({
@@ -65,6 +83,9 @@ export function useOnboarding() {
         description: 'Protocolos de limpeza e manutenção de infraestrutura',
         isLocked: !employee?.completedModules.includes('benefits'),
         isCompleted: employee?.completedModules.includes('infrastructure') || false,
+        order: 6,
+        targetAreas: ['Limpeza Geral'],
+        isCustom: false,
       });
     } else if (jobPosition === 'Limpeza Hospitalar') {
       baseModules.push({
@@ -73,6 +94,9 @@ export function useOnboarding() {
         description: 'Protocolos de limpeza e higiene hospitalar',
         isLocked: !employee?.completedModules.includes('benefits'),
         isCompleted: employee?.completedModules.includes('hospital-care') || false,
+        order: 6,
+        targetAreas: ['Limpeza Hospitalar'],
+        isCustom: false,
       });
     }
 

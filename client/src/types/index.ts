@@ -17,6 +17,9 @@ export interface Module {
   isCompleted: boolean;
   requiredFor?: string[];
   content?: ModuleContent;
+  order: number;
+  targetAreas: JobPosition[];
+  isCustom?: boolean;
 }
 
 export interface ModuleContent {

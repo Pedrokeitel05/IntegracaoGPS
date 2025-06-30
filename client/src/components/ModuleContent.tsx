@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, CheckCircle, Volume2, VolumeX, Play, Pause, Maximize } from 'lucide-react';
 
+// Tipos para a API do YouTube
+declare global {
+  interface Window {
+    YT: any;
+    onYouTubeIframeAPIReady: () => void;
+  }
+}
+
 interface ModuleContentProps {
   moduleId: string;
   onComplete: () => void;
@@ -15,6 +23,8 @@ export function ModuleContent({ moduleId, onComplete, onBack }: ModuleContentPro
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const playerRef = useRef<any>(null);
+  const [apiReady, setApiReady] = useState(false);
 
   const getModuleData = (id: string) => {
     const modules = {
@@ -53,26 +63,76 @@ export function ModuleContent({ moduleId, onComplete, onBack }: ModuleContentPro
 
   const moduleData = getModuleData(moduleId);
 
-  // Simular controle do vídeo do YouTube
+  // Carregar API do YouTube
   useEffect(() => {
-    // Simular duração do vídeo (em segundos)
-    setDuration(180); // 3 minutos como exemplo
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+
+      window.onYouTubeIframeAPIReady = () => {
+        setApiReady(true);
+      };
+    } else {
+      setApiReady(true);
+    }
   }, []);
 
+  // Inicializar player do YouTube quando API estiver pronta
+  useEffect(() => {
+    if (apiReady && !playerRef.current) {
+      playerRef.current = new window.YT.Player('youtube-player', {
+        height: '100%',
+        width: '100%',
+        videoId: '2SNsiRGhWPs',
+        playerVars: {
+          controls: 0,
+          disablekb: 1,
+          modestbranding: 1,
+          rel: 0,
+          showinfo: 0,
+          iv_load_policy: 3,
+          cc_load_policy: 0,
+          playsinline: 1,
+          autoplay: 0,
+          fs: 1
+        },
+        events: {
+          onReady: (event: any) => {
+            const videoDuration = event.target.getDuration();
+            setDuration(videoDuration);
+          },
+          onStateChange: (event: any) => {
+            if (event.data === window.YT.PlayerState.PLAYING) {
+              setIsPlaying(true);
+            } else if (event.data === window.YT.PlayerState.PAUSED) {
+              setIsPlaying(false);
+            } else if (event.data === window.YT.PlayerState.ENDED) {
+              setIsVideoCompleted(true);
+              setIsPlaying(false);
+            }
+          }
+        }
+      });
+    }
+  }, [apiReady]);
+
+  // Atualizar tempo atual do vídeo
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
-    if (isPlaying && !isVideoCompleted) {
+    if (isPlaying && !isVideoCompleted && playerRef.current) {
       interval = setInterval(() => {
-        setCurrentTime(prev => {
-          const newTime = prev + 1;
-          if (newTime >= duration) {
+        if (playerRef.current && playerRef.current.getCurrentTime) {
+          const currentVideoTime = playerRef.current.getCurrentTime();
+          setCurrentTime(currentVideoTime);
+          
+          if (currentVideoTime >= duration && duration > 0) {
             setIsVideoCompleted(true);
             setIsPlaying(false);
-            return duration;
           }
-          return newTime;
-        });
+        }
       }, 1000);
     }
 
@@ -82,13 +142,24 @@ export function ModuleContent({ moduleId, onComplete, onBack }: ModuleContentPro
   }, [isPlaying, duration, isVideoCompleted]);
 
   const handlePlayPause = () => {
-    if (!isVideoCompleted) {
-      setIsPlaying(!isPlaying);
+    if (!isVideoCompleted && playerRef.current) {
+      if (isPlaying) {
+        playerRef.current.pauseVideo();
+      } else {
+        playerRef.current.playVideo();
+      }
     }
   };
 
   const handleMute = () => {
-    setIsMuted(!isMuted);
+    if (playerRef.current) {
+      if (isMuted) {
+        playerRef.current.unMute();
+      } else {
+        playerRef.current.mute();
+      }
+      setIsMuted(!isMuted);
+    }
   };
 
   const handleFullscreen = () => {
@@ -108,7 +179,7 @@ export function ModuleContent({ moduleId, onComplete, onBack }: ModuleContentPro
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
@@ -159,20 +230,21 @@ export function ModuleContent({ moduleId, onComplete, onBack }: ModuleContentPro
             {/* Player de Vídeo */}
             <div className="mb-8">
               <div className="relative bg-black rounded-2xl overflow-hidden shadow-2xl">
-                {/* Iframe do YouTube com tela cheia habilitada */}
+                {/* Player do YouTube com API */}
                 <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-                  <iframe
-                    ref={iframeRef}
+                  <div
+                    id="youtube-player"
                     className="absolute top-0 left-0 w-full h-full"
-                    src="https://www.youtube.com/embed/2SNsiRGhWPs?enablejsapi=1&controls=0&disablekb=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&cc_load_policy=0&playsinline=1&autoplay=0"
-                    title="Vídeo de Treinamento GPS Group"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                    allowFullScreen={true}
-                  ></iframe>
+                  ></div>
+                  
+                  {/* Overlay transparente para impedir cliques na tela */}
+                  <div 
+                    className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                    style={{ pointerEvents: 'none' }}
+                  ></div>
                   
                   {/* Overlay de controles customizados */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 pointer-events-auto">
                     {/* Barra de Progresso do Vídeo */}
                     <div className="w-full bg-white/20 rounded-full h-1 mb-3">
                       <div 

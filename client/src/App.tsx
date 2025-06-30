@@ -3,7 +3,7 @@ import { WelcomeScreen } from './components/WelcomeScreen';
 import { RegistrationForm } from './components/RegistrationForm';
 import { ModuleNavigation } from './components/ModuleNavigation';
 import { ModuleContent } from './components/ModuleContent';
-import { AdminDashboard } from './components/AdminDashboard';
+import { AdvancedAdminDashboard } from './components/AdvancedAdminDashboard';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { useOnboarding } from './hooks/useOnboarding';
 import { useAdmin } from './hooks/useAdmin';
@@ -71,12 +71,17 @@ function App() {
   // Se está no modo admin, mostrar o painel administrativo
   if (isAdminMode) {
     return (
-      <AdminDashboard
+      <AdvancedAdminDashboard
         onLogout={logout}
         modules={modules}
         onUpdateModule={handleUpdateModules}
         onAddModule={handleAddModule}
         onDeleteModule={handleDeleteModule}
+        onReorderModules={(reorderedModules) => {
+          reorderedModules.forEach((module, index) => {
+            handleUpdateModules(module.id, { order: index + 1 });
+          });
+        }}
       />
     );
   }

@@ -36,6 +36,9 @@ export function AdminDashboard({ onLogout, modules, onUpdateModule, onAddModule,
         videoUrl: formData.videoUrl,
         isLocked: false,
         isCompleted: false,
+        order: modules.length + 1,
+        targetAreas: ['Segurança/Recepção', 'Limpeza Geral', 'Limpeza Hospitalar', 'Administrativo', 'Gerência', 'Técnico', 'Outros'],
+        isCustom: true,
       });
       setShowAddForm(false);
     }

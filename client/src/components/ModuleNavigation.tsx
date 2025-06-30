@@ -29,9 +29,16 @@ export function ModuleNavigation({ modules, employee, onModuleStart, onAdminClic
     }
   };
 
-  const completedCount = modules.filter(m => m.isCompleted).length;
-  const totalCount = modules.length;
-  const progressPercentage = (completedCount / totalCount) * 100;
+  // Filtrar módulos baseado na área de trabalho do usuário
+  const filteredModules = modules.filter(module => 
+    !module.targetAreas || 
+    module.targetAreas.length === 0 || 
+    module.targetAreas.includes(employee.jobPosition as any)
+  ).sort((a, b) => a.order - b.order);
+
+  const completedCount = filteredModules.filter(m => m.isCompleted).length;
+  const totalCount = filteredModules.length;
+  const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 relative">
@@ -101,7 +108,7 @@ export function ModuleNavigation({ modules, employee, onModuleStart, onAdminClic
                 msOverflowStyle: 'none'
               }}
             >
-              {modules.map((module, index) => (
+              {filteredModules.map((module, index) => (
                 <div key={module.id} className="snap-center relative z-0 hover:z-10 overflow-visible">
                   <ModuleCard
                     module={module}
