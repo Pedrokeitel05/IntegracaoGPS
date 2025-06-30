@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { ChevronLeft, ChevronRight, User, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, User, Calendar, Settings } from 'lucide-react';
 import { Module, Employee } from '../types';
 import { ModuleCard } from './ModuleCard';
 
@@ -7,9 +7,10 @@ interface ModuleNavigationProps {
   modules: Module[];
   employee: Employee;
   onModuleStart: (moduleId: string) => void;
+  onAdminClick?: () => void;
 }
 
-export function ModuleNavigation({ modules, employee, onModuleStart }: ModuleNavigationProps) {
+export function ModuleNavigation({ modules, employee, onModuleStart, onAdminClick }: ModuleNavigationProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: 'left' | 'right') => {
@@ -33,7 +34,7 @@ export function ModuleNavigation({ modules, employee, onModuleStart }: ModuleNav
   const progressPercentage = (completedCount / totalCount) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 relative">
       <div className="bg-black/20 backdrop-blur-lg border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -123,6 +124,17 @@ export function ModuleNavigation({ modules, employee, onModuleStart }: ModuleNav
           </div>
         </div>
       </div>
+
+      {/* Botão Admin no canto superior direito */}
+      {onAdminClick && (
+        <button
+          onClick={onAdminClick}
+          className="absolute top-6 right-6 p-3 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg hover:bg-white/20 transition-colors"
+          title="Painel Administrativo"
+        >
+          <Settings className="h-5 w-5 text-white" />
+        </button>
+      )}
 
       {completedCount === totalCount && (
         <div className="fixed bottom-4 sm:bottom-8 right-4 sm:right-8 bg-gradient-to-r from-green-600 to-green-500 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl shadow-2xl">

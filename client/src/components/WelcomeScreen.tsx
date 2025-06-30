@@ -1,13 +1,14 @@
 import React from 'react';
-import { ArrowRight, Building2 } from 'lucide-react';
+import { ArrowRight, Building2, Settings } from 'lucide-react';
 
 interface WelcomeScreenProps {
   onStart: () => void;
+  onAdminClick?: () => void;
 }
 
-export function WelcomeScreen({ onStart }: WelcomeScreenProps) {
+export function WelcomeScreen({ onStart, onAdminClick }: WelcomeScreenProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center p-4 relative">
       <div className="max-w-4xl mx-auto text-center">
         {/* Logo */}
         <div className="mb-8 flex justify-center">
@@ -62,6 +63,17 @@ export function WelcomeScreen({ onStart }: WelcomeScreenProps) {
           Tempo estimado de conclusão: 45-60 minutos
         </p>
       </div>
+
+      {/* Botão Admin no canto superior direito */}
+      {onAdminClick && (
+        <button
+          onClick={onAdminClick}
+          className="absolute top-6 right-6 p-3 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg hover:bg-white/20 transition-colors"
+          title="Painel Administrativo"
+        >
+          <Settings className="h-5 w-5 text-white" />
+        </button>
+      )}
     </div>
   );
 }

@@ -12,6 +12,7 @@ export interface Module {
   id: string;
   title: string;
   description: string;
+  videoUrl?: string;
   isLocked: boolean;
   isCompleted: boolean;
   requiredFor?: string[];
