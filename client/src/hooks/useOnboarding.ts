@@ -1,24 +1,33 @@
 import { useState, useCallback, useEffect } from "react";
 import { database } from "../firebase";
-import { ref, set, onValue, get } from "firebase/database";
+import { ref, set, onValue, get, push, update } from "firebase/database"; // Adicionado 'update'
 import { Employee, Module, JobPosition } from "../types";
 
 export function useOnboarding() {
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [currentStep, setCurrentStep] = useState<string>("welcome");
   const [modules, setModules] = useState<Module[]>([]);
+  const [allEmployees, setAllEmployees] = useState<Employee[]>([]);
 
-  // Ouve por alterações nos módulos em tempo real
   useEffect(() => {
     const modulesRef = ref(database, "modules");
     onValue(modulesRef, (snapshot) => {
       const data = snapshot.val();
+      if (data) setModules(Array.isArray(data) ? data : Object.values(data));
+    });
+
+    const employeesRef = ref(database, "employees");
+    onValue(employeesRef, (snapshot) => {
+      const data = snapshot.val();
       if (data) {
-        setModules(Array.isArray(data) ? data : Object.values(data));
+        const employeeList = Object.keys(data).map((key) => ({
+          id: key,
+          ...data[key],
+        }));
+        setAllEmployees(employeeList);
       }
     });
 
-    // Carrega os dados do funcionário do armazenamento local ao iniciar
     const savedEmployee = localStorage.getItem("gps_employee");
     if (savedEmployee) {
       setEmployee(JSON.parse(savedEmployee));
@@ -26,11 +35,9 @@ export function useOnboarding() {
     }
   }, []);
 
-  // Cria os módulos base APENAS se a base de dados estiver vazia
-  const initializeModules = useCallback(async (jobPosition: JobPosition) => {
+  const initializeModules = useCallback(async () => {
     const modulesRef = ref(database, "modules");
     const snapshot = await get(modulesRef);
-
     if (!snapshot.exists()) {
       const baseModules: Module[] = [
         {
@@ -135,37 +142,84 @@ export function useOnboarding() {
         "id" | "registrationDate" | "completedModules"
       >,
     ) => {
-      const newEmployee: Employee = {
+      const newEmployeeData = {
         ...employeeData,
-        id: crypto.randomUUID(),
         registrationDate: new Date().toISOString(),
         completedModules: ["registration"],
       };
-      localStorage.setItem("gps_employee", JSON.stringify(newEmployee));
-      setEmployee(newEmployee);
+      const newEmployeeRef = push(ref(database, "employees"), newEmployeeData);
+      const newEmployeeForState: Employee = {
+        ...newEmployeeData,
+        id: newEmployeeRef.key!,
+      };
+      localStorage.setItem("gps_employee", JSON.stringify(newEmployeeForState));
+      setEmployee(newEmployeeForState);
       setCurrentStep("modules");
-      initializeModules(employeeData.jobPosition as JobPosition);
+      initializeModules();
     },
     [initializeModules],
   );
 
+  // LÓGICA DE COMPLETAR MÓDULO ATUALIZADA
   const completeModule = useCallback(
     (moduleId: string) => {
       if (!employee) return;
-      const updatedEmployee = {
-        ...employee,
-        completedModules: [...employee.completedModules, moduleId],
-      };
-      localStorage.setItem("gps_employee", JSON.stringify(updatedEmployee));
-      setEmployee(updatedEmployee);
 
-      const newModules = modules.map((module, index) => {
-        if (module.id === moduleId) return { ...module, isCompleted: true };
-        if (index > 0 && modules[index - 1].id === moduleId)
-          return { ...module, isLocked: false };
-        return module;
+      // Garante que não há módulos duplicados na lista de concluídos
+      const newCompletedModules = [
+        ...new Set([...employee.completedModules, moduleId]),
+      ];
+
+      // Atualiza o objeto do funcionário no estado local
+      const updatedEmployee: Employee = {
+        ...employee,
+        completedModules: newCompletedModules,
+      };
+      setEmployee(updatedEmployee);
+      localStorage.setItem("gps_employee", JSON.stringify(updatedEmployee));
+
+      // Filtra para saber quais módulos são exigidos para este funcionário
+      const assignedModules = modules.filter(
+        (module) =>
+          !module.targetAreas ||
+          module.targetAreas.length === 0 ||
+          module.targetAreas.includes(employee.jobPosition as any),
+      );
+
+      // Verifica se todos os módulos atribuídos foram concluídos
+      const allModulesCompleted = assignedModules.every((module) =>
+        newCompletedModules.includes(module.id),
+      );
+
+      const employeeUpdates: Partial<Employee> = {
+        completedModules: newCompletedModules,
+      };
+
+      if (allModulesCompleted && !employee.completionDate) {
+        console.log(`Integração concluída para ${employee.fullName}`);
+        employeeUpdates.completionDate = new Date().toISOString();
+        updatedEmployee.completionDate = employeeUpdates.completionDate; // Atualiza o estado local também
+        localStorage.setItem("gps_employee", JSON.stringify(updatedEmployee)); // Atualiza o localStorage com a data
+      }
+
+      // Envia as atualizações (módulos concluídos e talvez a data de conclusão) para o Firebase
+      update(ref(database, `employees/${employee.id}`), employeeUpdates);
+
+      // Atualiza a lista geral de módulos (para desbloquear o próximo na UI)
+      const newModulesState = modules.map((module, index, arr) => {
+        let isLocked = module.isLocked;
+        // Desbloqueia o próximo módulo se o anterior foi concluído
+        const prevModule = arr.find((m) => m.order === module.order - 1);
+        if (prevModule && newCompletedModules.includes(prevModule.id)) {
+          isLocked = false;
+        }
+        return {
+          ...module,
+          isCompleted: newCompletedModules.includes(module.id),
+          isLocked,
+        };
       });
-      set(ref(database, "modules"), newModules);
+      set(ref(database, "modules"), newModulesState);
     },
     [employee, modules],
   );
@@ -215,6 +269,7 @@ export function useOnboarding() {
     employee,
     currentStep,
     modules,
+    allEmployees,
     setCurrentStep,
     registerEmployee,
     completeModule,

@@ -5,7 +5,7 @@ import { ModuleNavigation } from "./components/ModuleNavigation";
 import { ModuleContent } from "./components/ModuleContent";
 import { AdvancedAdminDashboard } from "./components/AdvancedAdminDashboard";
 import { AdminLoginModal } from "./components/AdminLoginModal";
-import { useOnboarding } from "./hooks/useOnboarding";
+import { useOnboarding } from "./hooks/useOnboarding"; // ESTA LINHA ESTAVA EM FALTA
 import { useAdmin } from "./hooks/useAdmin";
 
 function App() {
@@ -13,6 +13,7 @@ function App() {
     employee,
     currentStep,
     modules,
+    allEmployees,
     setCurrentStep,
     registerEmployee,
     completeModule,
@@ -36,9 +37,9 @@ function App() {
 
   useEffect(() => {
     if (employee && modules.length === 0) {
-      initializeModules(employee.jobPosition as any);
+      initializeModules();
     }
-  }, [employee, modules.length, initializeModules]);
+  }, [employee, modules, initializeModules]);
 
   const handleStartOnboarding = () => setCurrentStep("registration");
   const handleRegistrationSubmit = (data: any) => registerEmployee(data);
@@ -58,6 +59,7 @@ function App() {
       <AdvancedAdminDashboard
         onLogout={logout}
         modules={modules}
+        employees={allEmployees}
         onUpdateModule={updateModule}
         onAddModule={addModule}
         onDeleteModule={deleteModule}
@@ -83,7 +85,7 @@ function App() {
     case "modules":
       if (!employee) {
         setCurrentStep("welcome");
-        return null; // Evita piscar a tela
+        return null;
       }
       return (
         <ModuleNavigation
