@@ -1,5 +1,5 @@
-import React from 'react';
-import { Lock, CheckCircle, Play, ArrowRight } from 'lucide-react';
+import React from "react";
+import { Lock, CheckCircle, Play, ArrowRight } from "lucide-react";
 
 interface Module {
   id: string;
@@ -17,62 +17,45 @@ interface ModuleCardProps {
 
 export function ModuleCard({ module, index, onStart }: ModuleCardProps) {
   const getModuleIcon = () => {
-    if (module.isCompleted) return <CheckCircle className="h-8 w-8 text-green-400" />;
+    if (module.isCompleted)
+      return <CheckCircle className="h-8 w-8 text-green-400" />;
     if (module.isLocked) return <Lock className="h-8 w-8 text-gray-400" />;
     return <Play className="h-8 w-8 text-blue-400" />;
   };
 
   const getCardStyles = () => {
-    if (module.isCompleted) {
+    if (module.isCompleted)
       return "bg-gradient-to-br from-green-900/40 to-green-800/40 border-green-500/50 shadow-green-500/20";
-    }
-    if (module.isLocked) {
+    if (module.isLocked)
       return "bg-gradient-to-br from-gray-900/40 to-gray-800/40 border-gray-600/50 shadow-gray-500/10";
-    }
     return "bg-gradient-to-br from-blue-900/40 to-blue-800/40 border-blue-500/50 shadow-blue-500/20 hover:shadow-blue-500/30";
   };
 
   const handleCardClick = () => {
-    if (module.id === 'registration' || module.isLocked) return;
-    onStart(module.id);
+    if (!module.isLocked && module.id !== "registration") onStart(module.id);
   };
-
-  const isClickable = module.id !== 'registration' && !module.isLocked;
+  const isClickable = !module.isLocked && module.id !== "registration";
 
   return (
     <div
-      className={`
-        relative flex-shrink-0 rounded-2xl border backdrop-blur-lg shadow-2xl transition-all duration-300
-        w-72 h-80 sm:w-80 sm:h-96 lg:w-72 lg:h-80 xl:w-80 xl:h-96
-        ${getCardStyles()}
-        ${isClickable ? 'hover:shadow-2xl hover:shadow-blue-500/40 cursor-pointer' : 'cursor-default'}
-      `}
-      style={{ transformOrigin: 'bottom center' }}
+      className={`relative flex-shrink-0 rounded-2xl border backdrop-blur-lg shadow-2xl transition-all duration-300 w-72 h-80 sm:w-80 sm:h-96 lg:w-72 lg:h-80 xl:w-80 xl:h-96 ${getCardStyles()} ${isClickable ? "hover:shadow-2xl hover:shadow-blue-500/40 hover:scale-105 cursor-pointer" : "cursor-default"}`}
+      style={{ transformOrigin: "top center" }}
       onClick={handleCardClick}
     >
       <div className="p-6 h-full flex flex-col justify-between">
-        <div className="flex justify-center mb-4">
-          {getModuleIcon()}
-        </div>
-
+        <div className="flex justify-center mb-4">{getModuleIcon()}</div>
         <h3
-          className={`text-base sm:text-lg md:text-xl font-bold text-center mb-2 sm:mb-3 leading-tight px-2 ${
-            module.isLocked ? 'text-gray-400' : 'text-white'
-          }`}
+          className={`text-base sm:text-lg md:text-xl font-bold text-center mb-2 sm:mb-3 leading-tight px-2 ${module.isLocked ? "text-gray-400" : "text-white"}`}
         >
           {module.title}
         </h3>
-
         <p
-          className={`text-center text-xs sm:text-sm mb-3 sm:mb-4 flex-grow px-2 leading-relaxed ${
-            module.isLocked ? 'text-gray-500' : 'text-blue-200'
-          }`}
+          className={`text-center text-xs sm:text-sm mb-3 sm:mb-4 flex-grow px-2 leading-relaxed ${module.isLocked ? "text-gray-500" : "text-blue-200"}`}
         >
           {module.description}
         </p>
-
         <div className="text-center mt-auto">
-          {module.id === 'registration' ? (
+          {module.id === "registration" ? (
             <div className="flex items-center justify-center space-x-2 text-green-400">
               <CheckCircle className="h-5 w-5" />
               <span className="font-semibold text-sm">Cadastro Realizado</span>
@@ -95,7 +78,6 @@ export function ModuleCard({ module, index, onStart }: ModuleCardProps) {
           )}
         </div>
       </div>
-
       {module.isLocked && (
         <div className="absolute inset-0 bg-black/30 rounded-2xl flex items-center justify-center">
           <div className="text-center p-4">
