@@ -9,11 +9,7 @@ export default defineConfig({
     runtimeErrorOverlay(),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
-        ]
+      ? [(await import("@replit/vite-plugin-cartographer")).cartographer()]
       : []),
   ],
   resolve: {
@@ -21,6 +17,13 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
+    },
+  },
+  server: {
+    host: "0.0.0.0",
+    port: 5000,
+    hmr: {
+      clientPort: 443,
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
