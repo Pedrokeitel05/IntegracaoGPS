@@ -9,9 +9,10 @@ interface RegistrationFormProps {
     jobPosition: JobPosition;
     company: Company;
   }) => void;
+  onBack: () => void;
 }
 
-export function RegistrationForm({ onSubmit }: RegistrationFormProps) {
+export function RegistrationForm({ onSubmit, onBack }: RegistrationFormProps) {
   const [formData, setFormData] = useState({
     fullName: "",
     cpf: "",
@@ -175,13 +176,24 @@ export function RegistrationForm({ onSubmit }: RegistrationFormProps) {
                 Data de Cadastro: {new Date().toLocaleString("pt-BR")}
               </div>
             </div>
-            <button
-              type="submit"
-              disabled={!isFormValid || isSubmitted}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-gray-600 disabled:to-gray-500 text-white py-4 rounded-xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
-            >
-              {isSubmitted ? "Cadastro Concluído" : "Finalizar Cadastro"}
-            </button>
+
+            {/* Bloco de botões alterado */}
+            <div className="flex flex-col sm:flex-row-reverse gap-4 pt-2">
+              <button
+                type="submit"
+                disabled={!isFormValid || isSubmitted}
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-blue-800 disabled:to-blue-700 disabled:opacity-50 text-white py-4 rounded-xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
+              >
+                {isSubmitted ? "Cadastro Concluído" : "Finalizar Cadastro"}
+              </button>
+              <button
+                type="button"
+                onClick={onBack}
+                className="w-full sm:w-1/3 bg-white/10 hover:bg-white/20 text-white py-4 rounded-xl text-lg font-semibold transition-all duration-300"
+              >
+                Voltar
+              </button>
+            </div>
           </form>
           {isSubmitted && (
             <div className="mt-6 p-4 bg-green-900/30 border border-green-500/30 rounded-xl">

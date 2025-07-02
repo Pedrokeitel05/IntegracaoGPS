@@ -11,10 +11,11 @@ export function WelcomeScreen({ onStart, onAdminClick }: WelcomeScreenProps) {
     <div className="min-h-screen bg-blue-900 flex items-center justify-center p-4 relative">
       <div className="max-w-4xl mx-auto text-center">
         <div className="mb-8 flex justify-center">
+          {/* LOGO ALTERADA AQUI - TAMANHO REDUZIDO */}
           <img
-            src="/REGIONAL RS (9).png"
+            src="/GPA BRANCO.png"
             alt="Grupo GPS"
-            className="h-24 w-auto object-contain"
+            className="h-16 w-auto object-contain"
           />
         </div>
         <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-12 border border-white/20 shadow-2xl">
@@ -30,26 +31,30 @@ export function WelcomeScreen({ onStart, onAdminClick }: WelcomeScreenProps) {
             integração. Vamos guiá-lo através de tudo que você precisa saber
             para ter sucesso em sua nova função.
           </p>
-          <div className="space-y-3 sm:space-y-4 text-blue-200 mb-8 sm:mb-10 px-4">
-            <div className="flex items-center justify-center space-x-3">
-              <div className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0"></div>
-              <span className="text-sm sm:text-base">
-                Complete seu cadastro
-              </span>
-            </div>
-            <div className="flex items-center justify-center space-x-3">
-              <div className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0"></div>
-              <span className="text-sm sm:text-base">
-                Aprenda nossas políticas e procedimentos
-              </span>
-            </div>
-            <div className="flex items-center justify-center space-x-3">
-              <div className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0"></div>
-              <span className="text-sm sm:text-base">
-                Acesse treinamentos específicos da sua função
-              </span>
+
+          <div className="mb-8 sm:mb-10 px-4 text-center">
+            <div className="inline-block text-left space-y-3 sm:space-y-4 text-blue-200">
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0"></div>
+                <span className="text-sm sm:text-base">
+                  Complete seu cadastro
+                </span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0"></div>
+                <span className="text-sm sm:text-base">
+                  Aprenda nossas políticas e procedimentos
+                </span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0"></div>
+                <span className="text-sm sm:text-base">
+                  Acesse treinamentos específicos da sua função
+                </span>
+              </div>
             </div>
           </div>
+
           <button
             onClick={onStart}
             className="group bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-8 sm:px-12 py-3 sm:py-4 rounded-2xl text-base sm:text-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-xl flex items-center space-x-3 mx-auto"

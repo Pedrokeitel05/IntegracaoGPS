@@ -56,11 +56,7 @@ export function ModuleNavigation({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <img
-                src="/REGIONAL RS (9).png"
-                alt="Grupo GPS"
-                className="h-10 sm:h-12 w-auto object-contain"
-              />
+              {/* LOGO REMOVIDA DAQUI */}
               <div className="text-center sm:text-left">
                 <h1 className="text-xl sm:text-2xl font-bold text-white">
                   Progresso da Integração
@@ -156,6 +152,15 @@ export function ModuleNavigation({
               Use as setas para navegar entre os módulos ou deslize
               horizontalmente
             </p>
+          </div>
+
+          {/* LOGO AJUSTADA AQUI */}
+          <div className="mt-8 flex justify-center">
+            <img
+              src="/GPA BRANCO.png"
+              alt="Grupo GPS"
+              className="h-12 w-auto object-contain"
+            />
           </div>
         </div>
       </div>

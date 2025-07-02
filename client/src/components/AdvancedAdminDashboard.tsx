@@ -1,4 +1,5 @@
 import { useState } from "react";
+import toast from "react-hot-toast"; // Importe a função toast
 import {
   Settings,
   Plus,
@@ -12,7 +13,7 @@ import {
   ArrowUp,
   ArrowDown,
   Users,
-  Target,
+  LayoutList,
   Download,
   BookOpen,
   Calendar,
@@ -49,7 +50,7 @@ export function AdvancedAdminDashboard({
   onDeleteModule,
   onReorderModules,
 }: AdvancedAdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'modules' | 'export'>('modules');
+  const [activeTab, setActiveTab] = useState<"modules" | "export">("modules");
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState<ModuleFormData>({
@@ -73,12 +74,15 @@ export function AdvancedAdminDashboard({
       isLocked: module.isLocked,
       order: module.order,
     });
+    setShowAddForm(true);
   };
 
   const handleSave = () => {
     if (editingModule) {
       onUpdateModule(editingModule.id, formData);
+      toast.success("Módulo atualizado com sucesso!");
       setEditingModule(null);
+      setShowAddForm(false);
       resetForm();
     }
   };
@@ -89,9 +93,22 @@ export function AdvancedAdminDashboard({
         ...formData,
         order: modules.length + 1,
       });
+      toast.success("Módulo adicionado com sucesso!");
       setShowAddForm(false);
       resetForm();
+    } else {
+      toast.error("Título e descrição são obrigatórios.");
     }
+  };
+
+  const handleDeleteWithNotification = (moduleId: string) => {
+    onDeleteModule(moduleId);
+    toast.success("Módulo excluído com sucesso!");
+  };
+
+  const handleToggleLockWithNotification = (module: Module) => {
+    onUpdateModule(module.id, { isLocked: !module.isLocked });
+    toast.success(`Módulo ${!module.isLocked ? "bloqueado" : "desbloqueado"}.`);
   };
 
   const resetForm = () => {
@@ -105,19 +122,19 @@ export function AdvancedAdminDashboard({
     });
   };
 
-  const handleToggleLock = (module: Module) =>
-    onUpdateModule(module.id, { isLocked: !module.isLocked });
-
   const handleMove = (direction: "up" | "down", module: Module) => {
     const currentIndex = sortedModules.findIndex((m) => m.id === module.id);
     const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-    
+
     if (newIndex >= 0 && newIndex < sortedModules.length) {
       const reorderedModules = [...sortedModules];
-      [reorderedModules[currentIndex], reorderedModules[newIndex]] = 
-      [reorderedModules[newIndex], reorderedModules[currentIndex]];
-      
+      [reorderedModules[currentIndex], reorderedModules[newIndex]] = [
+        reorderedModules[newIndex],
+        reorderedModules[currentIndex],
+      ];
+
       onReorderModules(reorderedModules);
+      toast.success("Ordem dos módulos atualizada.");
     }
   };
 
@@ -130,16 +147,16 @@ export function AdvancedAdminDashboard({
 
   const jobPositions: JobPosition[] = [
     "Segurança/Recepção",
-    "Limpeza Geral", 
+    "Limpeza Geral",
     "Limpeza Hospitalar",
     "Administrativo",
     "Gerência",
     "Técnico",
-    "Outros"
+    "Outros",
   ];
 
-  const completedEmployees = employees.filter(emp => emp.completionDate);
-  const inProgressEmployees = employees.filter(emp => !emp.completionDate);
+  const completedEmployees = employees.filter((emp) => emp.completionDate);
+  const inProgressEmployees = employees.filter((emp) => !emp.completionDate);
 
   return (
     <div className="min-h-screen bg-blue-900">
@@ -160,7 +177,7 @@ export function AdvancedAdminDashboard({
             <div className="flex items-center space-x-4">
               <button
                 onClick={onLogout}
-                className="bg-gradient-to-r from-gray-600 to-gray-500 hover:from-gray-500 hover:to-gray-400 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
+                className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
               >
                 <LogOut className="h-5 w-5" />
                 <span>Sair</span>
@@ -169,7 +186,7 @@ export function AdvancedAdminDashboard({
           </div>
         </div>
       </div>
-      
+
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Estatísticas no topo */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -180,7 +197,9 @@ export function AdvancedAdminDashboard({
               </div>
               <div>
                 <p className="text-blue-200 text-sm">Total de Módulos</p>
-                <p className="text-2xl font-bold text-white">{modules.length}</p>
+                <p className="text-2xl font-bold text-white">
+                  {modules.length}
+                </p>
               </div>
             </div>
           </div>
@@ -191,8 +210,12 @@ export function AdvancedAdminDashboard({
                 <CheckCircle className="h-6 w-6 text-green-400" />
               </div>
               <div>
-                <p className="text-green-200 text-sm">Funcionários Concluídos</p>
-                <p className="text-2xl font-bold text-white">{completedEmployees.length}</p>
+                <p className="text-green-200 text-sm">
+                  Funcionários Concluídos
+                </p>
+                <p className="text-2xl font-bold text-white">
+                  {completedEmployees.length}
+                </p>
               </div>
             </div>
           </div>
@@ -204,7 +227,9 @@ export function AdvancedAdminDashboard({
               </div>
               <div>
                 <p className="text-yellow-200 text-sm">Em Andamento</p>
-                <p className="text-2xl font-bold text-white">{inProgressEmployees.length}</p>
+                <p className="text-2xl font-bold text-white">
+                  {inProgressEmployees.length}
+                </p>
               </div>
             </div>
           </div>
@@ -213,22 +238,22 @@ export function AdvancedAdminDashboard({
         {/* Sistema de Abas */}
         <div className="flex space-x-4 mb-8">
           <button
-            onClick={() => setActiveTab('modules')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center space-x-2 ${
-              activeTab === 'modules'
-                ? 'bg-blue-500 text-white'
-                : 'bg-white/10 text-blue-200 hover:bg-white/20'
+            onClick={() => setActiveTab("modules")}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 ${
+              activeTab === "modules"
+                ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white"
+                : "bg-white/10 text-blue-200 hover:bg-white/20"
             }`}
           >
-            <Target className="h-5 w-5" />
+            <LayoutList className="h-5 w-5" />
             <span>Gerenciar Módulos</span>
           </button>
           <button
-            onClick={() => setActiveTab('export')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center space-x-2 ${
-              activeTab === 'export'
-                ? 'bg-blue-500 text-white'
-                : 'bg-white/10 text-blue-200 hover:bg-white/20'
+            onClick={() => setActiveTab("export")}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 ${
+              activeTab === "export"
+                ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white"
+                : "bg-white/10 text-blue-200 hover:bg-white/20"
             }`}
           >
             <Download className="h-5 w-5" />
@@ -237,7 +262,7 @@ export function AdvancedAdminDashboard({
         </div>
 
         {/* Conteúdo das Abas */}
-        {activeTab === 'modules' && (
+        {activeTab === "modules" && (
           <div>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-white">Lista de Módulos</h2>
@@ -255,24 +280,17 @@ export function AdvancedAdminDashboard({
               {sortedModules.map((module, index) => (
                 <div
                   key={module.id}
-                  className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20"
+                  className="group bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 transition-all duration-300 hover:border-blue-400/50"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
-                        <span className="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-sm font-semibold">
-                          #{module.order}
+                        <span className="text-blue-400 font-mono text-sm">
+                          #{module.order.toString().padStart(2, "0")}
                         </span>
                         <h3 className="text-lg font-semibold text-white">
                           {module.title}
                         </h3>
-                        <div className="flex items-center space-x-2">
-                          {module.isLocked ? (
-                            <Lock className="h-4 w-4 text-red-400" />
-                          ) : (
-                            <Unlock className="h-4 w-4 text-green-400" />
-                          )}
-                        </div>
                       </div>
                       <p className="text-blue-200 mb-3">{module.description}</p>
                       {module.targetAreas && module.targetAreas.length > 0 && (
@@ -280,7 +298,7 @@ export function AdvancedAdminDashboard({
                           {module.targetAreas.map((area) => (
                             <span
                               key={area}
-                              className="bg-purple-500/20 text-purple-300 px-2 py-1 rounded-md text-xs"
+                              className="bg-white/5 text-blue-300 px-2 py-0.5 rounded text-xs font-mono"
                             >
                               {area}
                             </span>
@@ -289,42 +307,46 @@ export function AdvancedAdminDashboard({
                       )}
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <button
                         onClick={() => handleMove("up", module)}
                         disabled={index === 0}
-                        className="bg-blue-500/20 hover:bg-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed text-blue-400 p-2 rounded-lg transition-colors"
+                        className="p-2 disabled:opacity-20 disabled:cursor-not-allowed text-blue-300 hover:text-white transition-colors"
                       >
-                        <ArrowUp className="h-4 w-4" />
+                        <ArrowUp className="h-5 w-5" />
                       </button>
                       <button
                         onClick={() => handleMove("down", module)}
                         disabled={index === sortedModules.length - 1}
-                        className="bg-blue-500/20 hover:bg-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed text-blue-400 p-2 rounded-lg transition-colors"
+                        className="p-2 disabled:opacity-20 disabled:cursor-not-allowed text-blue-300 hover:text-white transition-colors"
                       >
-                        <ArrowDown className="h-4 w-4" />
+                        <ArrowDown className="h-5 w-5" />
                       </button>
                       <button
-                        onClick={() => handleToggleLock(module)}
-                        className={`p-2 rounded-lg transition-colors ${
+                        onClick={() => handleToggleLockWithNotification(module)}
+                        className={`p-2 transition-colors ${
                           module.isLocked
-                            ? "bg-red-500/20 hover:bg-red-500/40 text-red-400"
-                            : "bg-green-500/20 hover:bg-green-500/40 text-green-400"
+                            ? "text-red-400 hover:text-red-300"
+                            : "text-green-400 hover:text-green-300"
                         }`}
                       >
-                        {module.isLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                        {module.isLocked ? (
+                          <Lock className="h-5 w-5" />
+                        ) : (
+                          <Unlock className="h-5 w-5" />
+                        )}
                       </button>
                       <button
                         onClick={() => handleEdit(module)}
-                        className="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 p-2 rounded-lg transition-colors"
+                        className="p-2 text-yellow-400 hover:text-yellow-300 transition-colors"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-5 w-5" />
                       </button>
                       <button
-                        onClick={() => onDeleteModule(module.id)}
-                        className="bg-red-500/20 hover:bg-red-500/40 text-red-400 p-2 rounded-lg transition-colors"
+                        onClick={() => handleDeleteWithNotification(module.id)}
+                        className="p-2 text-red-400 hover:text-red-300 transition-colors"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-5 w-5" />
                       </button>
                     </div>
                   </div>
@@ -360,8 +382,10 @@ export function AdvancedAdminDashboard({
                       <input
                         type="text"
                         value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onChange={(e) =>
+                          setFormData({ ...formData, title: e.target.value })
+                        }
+                        className="w-full bg-transparent border-b-2 border-blue-500/30 py-3 px-1 text-white placeholder-gray-400 transition-colors duration-300 focus:outline-none focus:border-blue-400"
                         placeholder="Ex: Recursos Humanos"
                       />
                     </div>
@@ -372,9 +396,14 @@ export function AdvancedAdminDashboard({
                       </label>
                       <textarea
                         value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            description: e.target.value,
+                          })
+                        }
                         rows={3}
-                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full bg-transparent border-b-2 border-blue-500/30 py-3 px-1 text-white placeholder-gray-400 transition-colors duration-300 focus:outline-none focus:border-blue-400"
                         placeholder="Descreva o conteúdo do módulo"
                       />
                     </div>
@@ -386,8 +415,10 @@ export function AdvancedAdminDashboard({
                       <input
                         type="url"
                         value={formData.videoUrl}
-                        onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onChange={(e) =>
+                          setFormData({ ...formData, videoUrl: e.target.value })
+                        }
+                        className="w-full bg-transparent border-b-2 border-blue-500/30 py-3 px-1 text-white placeholder-gray-400 transition-colors duration-300 focus:outline-none focus:border-blue-400"
                         placeholder="https://youtube.com/watch?v=..."
                       />
                     </div>
@@ -398,31 +429,74 @@ export function AdvancedAdminDashboard({
                       </label>
                       <div className="grid grid-cols-2 gap-3">
                         {jobPositions.map((position) => (
-                          <label key={position} className="flex items-center space-x-3 cursor-pointer">
+                          <label
+                            key={position}
+                            className="flex items-center space-x-3 cursor-pointer group"
+                          >
                             <input
                               type="checkbox"
                               checked={formData.targetAreas.includes(position)}
-                              onChange={(e) => handleTargetAreaChange(position, e.target.checked)}
-                              className="w-4 h-4 text-blue-500 bg-white/10 border-white/20 rounded focus:ring-blue-500"
+                              onChange={(e) =>
+                                handleTargetAreaChange(
+                                  position,
+                                  e.target.checked,
+                                )
+                              }
+                              className="peer absolute h-0 w-0 opacity-0"
                             />
-                            <span className="text-white text-sm">{position}</span>
+                            <div className="h-5 w-5 rounded-md border-2 border-blue-400 bg-transparent transition-all duration-300 group-hover:border-blue-300 peer-checked:bg-blue-400 peer-checked:border-transparent flex items-center justify-center">
+                              <svg
+                                className="w-3 h-3 text-blue-900 hidden peer-checked:block"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                            </div>
+                            <span className="text-white text-sm group-hover:text-blue-200 transition-colors">
+                              {position}
+                            </span>
                           </label>
                         ))}
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-3">
+                    <label className="flex items-center space-x-3 cursor-pointer group">
                       <input
                         type="checkbox"
                         id="isLocked"
                         checked={formData.isLocked}
-                        onChange={(e) => setFormData({ ...formData, isLocked: e.target.checked })}
-                        className="w-4 h-4 text-blue-500 bg-white/10 border-white/20 rounded focus:ring-blue-500"
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            isLocked: e.target.checked,
+                          })
+                        }
+                        className="peer absolute h-0 w-0 opacity-0"
                       />
-                      <label htmlFor="isLocked" className="text-white text-sm">
+                      <div className="h-5 w-5 rounded-md border-2 border-blue-400 bg-transparent transition-all duration-300 group-hover:border-blue-300 peer-checked:bg-blue-400 peer-checked:border-transparent flex items-center justify-center">
+                        <svg
+                          className="w-3 h-3 text-blue-900 hidden peer-checked:block"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </div>
+                      <span className="text-white text-sm group-hover:text-blue-200 transition-colors">
                         Módulo bloqueado inicialmente
-                      </label>
-                    </div>
+                      </span>
+                    </label>
                   </div>
 
                   <div className="flex space-x-4 mt-8">
@@ -431,7 +505,11 @@ export function AdvancedAdminDashboard({
                       className="flex-1 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
                     >
                       <Save className="h-5 w-5" />
-                      <span>{editingModule ? "Salvar Alterações" : "Adicionar Módulo"}</span>
+                      <span>
+                        {editingModule
+                          ? "Salvar Alterações"
+                          : "Adicionar Módulo"}
+                      </span>
                     </button>
                     <button
                       onClick={() => {
@@ -450,9 +528,7 @@ export function AdvancedAdminDashboard({
           </div>
         )}
 
-        {activeTab === 'export' && (
-          <ExportPanel allEmployees={employees} />
-        )}
+        {activeTab === "export" && <ExportPanel allEmployees={employees} />}
       </div>
     </div>
   );
