@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Toaster } from "react-hot-toast"; // O import continua o mesmo
+import { Toaster } from "react-hot-toast";
 import { WelcomeScreen } from "./components/WelcomeScreen";
 import { RegistrationForm } from "./components/RegistrationForm";
 import { ModuleNavigation } from "./components/ModuleNavigation";
@@ -17,6 +17,7 @@ function App() {
     allEmployees,
     setCurrentStep,
     registerEmployee,
+    loginByCpf,
     completeModule,
     initializeModules,
     updateModule,
@@ -24,6 +25,10 @@ function App() {
     deleteModule,
     reorderModules,
     resetOnboarding,
+    updateEmployee,
+    deleteEmployee,
+    recordAbsence,
+    toggleBlockStatus,
   } = useOnboarding();
 
   const {
@@ -35,15 +40,17 @@ function App() {
     closeLoginModal,
   } = useAdmin();
   const [activeModule, setActiveModule] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    if (employee && modules.length === 0) {
+    if (!isInitialized) {
       initializeModules();
+      setIsInitialized(true);
     }
-  }, [employee, modules, initializeModules]);
+  }, [isInitialized, initializeModules]);
 
   const handleStartOnboarding = () => setCurrentStep("registration");
-  const handleRegistrationSubmit = (data: any) => registerEmployee(data);
+  const handleRegistrationAttempt = (data: any) => loginByCpf(data);
   const handleModuleStart = (moduleId: string) => {
     if (moduleId !== "registration") setActiveModule(moduleId);
   };
@@ -58,48 +65,29 @@ function App() {
 
   return (
     <>
-      {/* Bloco do Toaster com novo estilo e posição */}
       <Toaster
         position="bottom-right"
-        toastOptions={{
-          // Estilo base para todas as notificações
-          style: {
-            background: "rgba(15, 23, 42, 0.8)", // Fundo azul escuro semi-transparente
-            backdropFilter: "blur(10px)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            padding: "16px",
-            color: "#FFFFFF",
-            minWidth: "300px",
-          },
-          // Estilo para notificações de SUCESSO
-          success: {
-            duration: 3000,
-            iconTheme: {
-              primary: "#10B981", // Verde
-              secondary: "#FFFFFF",
-            },
-          },
-          // Estilo para notificações de ERRO
-          error: {
-            duration: 5000,
-            iconTheme: {
-              primary: "#EF4444", // Vermelho
-              secondary: "#FFFFFF",
-            },
-          },
-        }}
+        toastOptions={
+          {
+            // ...
+          }
+        }
       />
 
-      {/* O resto da sua lógica de renderização continua aqui */}
       {isAdminMode ? (
         <AdvancedAdminDashboard
           onLogout={logout}
           modules={modules}
           employees={allEmployees}
+          onRegisterEmployee={registerEmployee}
           onUpdateModule={updateModule}
           onAddModule={addModule}
           onDeleteModule={deleteModule}
           onReorderModules={reorderModules}
+          onUpdateEmployee={updateEmployee}
+          onDeleteEmployee={deleteEmployee}
+          onRecordAbsence={recordAbsence}
+          onToggleBlock={toggleBlockStatus}
         />
       ) : activeModule ? (
         <ModuleContent
@@ -113,7 +101,7 @@ function App() {
             case "registration":
               return (
                 <RegistrationForm
-                  onSubmit={handleRegistrationSubmit}
+                  onSubmit={handleRegistrationAttempt}
                   onBack={handleBackToWelcome}
                 />
               );

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import toast from "react-hot-toast"; // Importe a função toast
+import React, { useState } from "react";
+import toast from "react-hot-toast";
 import {
   Settings,
   Plus,
@@ -18,18 +18,27 @@ import {
   BookOpen,
   Calendar,
   CheckCircle,
+  UserPlus,
 } from "lucide-react";
-import { Module, JobPosition, Employee } from "../types";
+import { Module, JobPosition, Employee, AbsenceRecord } from "../types";
 import { ExportPanel } from "./ExportPanel";
+import { EmployeeRegistrationPanel } from "./EmployeeRegistrationPanel";
+import { EmployeeManagementPanel } from "./EmployeeManagementPanel";
+import { JOB_POSITIONS, COMPANIES } from "../constants/companyData";
 
 interface AdvancedAdminDashboardProps {
   onLogout: () => void;
   modules: Module[];
   employees: Employee[];
+  onRegisterEmployee: (employeeData: any) => void;
+  onUpdateEmployee: (employeeId: string, updates: Partial<Employee>) => void;
+  onDeleteEmployee: (employeeId: string) => void;
   onUpdateModule: (moduleId: string, updates: Partial<Module>) => void;
   onAddModule: (newModule: Omit<Module, "id">) => void;
   onDeleteModule: (moduleId: string) => void;
   onReorderModules: (reorderedModules: Module[]) => void;
+  onRecordAbsence: (employee: Employee, reason: string) => void;
+  onToggleBlock: (employee: Employee) => void;
 }
 
 interface ModuleFormData {
@@ -45,12 +54,19 @@ export function AdvancedAdminDashboard({
   onLogout,
   modules,
   employees,
+  onRegisterEmployee,
+  onUpdateEmployee,
+  onDeleteEmployee,
   onUpdateModule,
   onAddModule,
   onDeleteModule,
   onReorderModules,
+  onRecordAbsence,
+  onToggleBlock,
 }: AdvancedAdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<"modules" | "export">("modules");
+  const [activeTab, setActiveTab] = useState<
+    "modules" | "export" | "register" | "management"
+  >("modules");
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState<ModuleFormData>({
@@ -145,16 +161,6 @@ export function AdvancedAdminDashboard({
     setFormData({ ...formData, targetAreas: newTargetAreas });
   };
 
-  const jobPositions: JobPosition[] = [
-    "Segurança/Recepção",
-    "Limpeza Geral",
-    "Limpeza Hospitalar",
-    "Administrativo",
-    "Gerência",
-    "Técnico",
-    "Outros",
-  ];
-
   const completedEmployees = employees.filter((emp) => emp.completionDate);
   const inProgressEmployees = employees.filter((emp) => !emp.completionDate);
 
@@ -236,7 +242,7 @@ export function AdvancedAdminDashboard({
         </div>
 
         {/* Sistema de Abas */}
-        <div className="flex space-x-4 mb-8">
+        <div className="flex flex-wrap gap-4 mb-8">
           <button
             onClick={() => setActiveTab("modules")}
             className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 ${
@@ -248,6 +254,19 @@ export function AdvancedAdminDashboard({
             <LayoutList className="h-5 w-5" />
             <span>Gerenciar Módulos</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab("register")}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 ${
+              activeTab === "register"
+                ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white"
+                : "bg-white/10 text-blue-200 hover:bg-white/20"
+            }`}
+          >
+            <UserPlus className="h-5 w-5" />
+            <span>Cadastro de Colaborador</span>
+          </button>
+
           <button
             onClick={() => setActiveTab("export")}
             className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 ${
@@ -259,11 +278,23 @@ export function AdvancedAdminDashboard({
             <Download className="h-5 w-5" />
             <span>Exportar Dados</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab("management")}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 ${
+              activeTab === "management"
+                ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white"
+                : "bg-white/10 text-blue-200 hover:bg-white/20"
+            }`}
+          >
+            <Users className="h-5 w-5" />
+            <span>Gestão de Cadastros</span>
+          </button>
         </div>
 
         {/* Conteúdo das Abas */}
         {activeTab === "modules" && (
-          <div>
+          <div className="max-w-5xl mx-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-white">Lista de Módulos</h2>
               <button
@@ -275,7 +306,6 @@ export function AdvancedAdminDashboard({
               </button>
             </div>
 
-            {/* Lista de Módulos */}
             <div className="space-y-4">
               {sortedModules.map((module, index) => (
                 <div
@@ -354,7 +384,6 @@ export function AdvancedAdminDashboard({
               ))}
             </div>
 
-            {/* Modal de Edição/Adição */}
             {(editingModule || showAddForm) && (
               <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                 <div className="bg-blue-900 border border-white/20 rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -373,7 +402,6 @@ export function AdvancedAdminDashboard({
                       <X className="h-6 w-6" />
                     </button>
                   </div>
-
                   <div className="space-y-6">
                     <div>
                       <label className="block text-sm font-medium text-blue-200 mb-2">
@@ -389,7 +417,6 @@ export function AdvancedAdminDashboard({
                         placeholder="Ex: Recursos Humanos"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-blue-200 mb-2">
                         Descrição
@@ -407,7 +434,6 @@ export function AdvancedAdminDashboard({
                         placeholder="Descreva o conteúdo do módulo"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-blue-200 mb-2">
                         URL do Vídeo (opcional)
@@ -422,13 +448,12 @@ export function AdvancedAdminDashboard({
                         placeholder="https://youtube.com/watch?v=..."
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-blue-200 mb-3">
                         Áreas de Trabalho
                       </label>
                       <div className="grid grid-cols-2 gap-3">
-                        {jobPositions.map((position) => (
+                        {JOB_POSITIONS.map((position) => (
                           <label
                             key={position}
                             className="flex items-center space-x-3 cursor-pointer group"
@@ -465,7 +490,6 @@ export function AdvancedAdminDashboard({
                         ))}
                       </div>
                     </div>
-
                     <label className="flex items-center space-x-3 cursor-pointer group">
                       <input
                         type="checkbox"
@@ -498,7 +522,6 @@ export function AdvancedAdminDashboard({
                       </span>
                     </label>
                   </div>
-
                   <div className="flex space-x-4 mt-8">
                     <button
                       onClick={editingModule ? handleSave : handleAdd}
@@ -529,6 +552,24 @@ export function AdvancedAdminDashboard({
         )}
 
         {activeTab === "export" && <ExportPanel allEmployees={employees} />}
+
+        {activeTab === "register" && (
+          <EmployeeRegistrationPanel
+            allEmployees={employees}
+            onRegister={onRegisterEmployee}
+          />
+        )}
+
+        {activeTab === "management" && (
+          <EmployeeManagementPanel
+            employees={employees}
+            modules={modules}
+            onUpdateEmployee={onUpdateEmployee}
+            onDelete={onDeleteEmployee}
+            onRecordAbsence={onRecordAbsence}
+            onToggleBlock={onToggleBlock}
+          />
+        )}
       </div>
     </div>
   );

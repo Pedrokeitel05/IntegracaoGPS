@@ -17,7 +17,7 @@ export function useWebSocket({
   onModuleUpdate,
   onModulesReorder,
   onModuleAdd,
-  onDeleteModule,
+  onModuleDelete,
 }: UseWebSocketProps) {
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -50,14 +50,14 @@ export function useWebSocket({
             if (onModuleAdd) onModuleAdd(message.payload.module);
             break;
           case "module_delete":
-            if (onDeleteModule) onDeleteModule(message.payload.moduleId);
+            if (onModuleDelete) onModuleDelete (message.payload.moduleId);
             break;
         }
       } catch (error) {
         console.error("Erro ao processar a mensagem WebSocket:", error);
       }
     };
-  }, [onModuleUpdate, onModulesReorder, onModuleAdd, onDeleteModule]);
+  }, [onModuleUpdate, onModulesReorder, onModuleAdd, onModuleDelete]);
 
   useEffect(() => {
     connect();

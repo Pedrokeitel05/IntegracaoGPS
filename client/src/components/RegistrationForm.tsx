@@ -1,14 +1,16 @@
 import React, { useState } from "react";
-import { User, FileText, Building, Briefcase, Calendar } from "lucide-react";
-import { JobPosition, Company } from "../types";
+import {
+  User,
+  FileText,
+  Building,
+  Briefcase,
+  Calendar,
+  AlertCircle,
+} from "lucide-react";
+import { JOB_POSITIONS, COMPANIES } from "../constants/companyData";
 
 interface RegistrationFormProps {
-  onSubmit: (data: {
-    fullName: string;
-    cpf: string;
-    jobPosition: JobPosition;
-    company: Company;
-  }) => void;
+  onSubmit: (data: any) => { status: string; [key: string]: any } | null;
   onBack: () => void;
 }
 
@@ -20,19 +22,56 @@ export function RegistrationForm({ onSubmit, onBack }: RegistrationFormProps) {
     company: "" as Company,
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const formatCPF = (value: string) =>
     value
       .replace(/\D/g, "")
       .replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+
   const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFormData((prev) => ({ ...prev, cpf: formatCPF(e.target.value) }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitted) return;
-    setIsSubmitted(true);
-    onSubmit(formData);
+    setError(null);
+
+    const result = onSubmit(formData);
+
+    if (result) {
+      switch (result.status) {
+        case "SUCCESS":
+          setIsSubmitted(true);
+          break;
+        case "CPF_NOT_FOUND":
+          setError(
+            "CPF não encontrado. Por favor, contate o RH para poder prosseguir.",
+          );
+          break;
+        case "JOB_MISMATCH":
+          setError(
+            "O cargo selecionado está incorreto. Verifique seus dados ou contate o RH.",
+          );
+          break;
+        case "COMPANY_MISMATCH":
+          setError(
+            "A empresa selecionada está incorreta. Verifique seus dados ou contate o RH.",
+          );
+          break;
+        case "USER_BLOCKED":
+          setError(
+            "Seu acesso está bloqueado. Por favor, contate o RH para mais informações.",
+          );
+          break;
+        default:
+          setError("Ocorreu um erro inesperado. Tente novamente.");
+          break;
+      }
+    } else {
+      setError(
+        "CPF não encontrado. Por favor, contate o RH para poder prosseguir.",
+      );
+    }
   };
 
   const isFormValid =
@@ -50,10 +89,10 @@ export function RegistrationForm({ onSubmit, onBack }: RegistrationFormProps) {
               <User className="h-12 w-12 text-blue-400" />
             </div>
             <h2 className="text-3xl font-bold text-white mb-2">
-              Cadastro de Funcionário
+              Iniciar Integração
             </h2>
             <p className="text-blue-200">
-              Complete seu cadastro para iniciar o processo de integração
+              Preencha seus dados para acessar o treinamento.
             </p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -110,27 +149,11 @@ export function RegistrationForm({ onSubmit, onBack }: RegistrationFormProps) {
                 <option value="" className="bg-slate-800">
                   Selecione seu cargo
                 </option>
-                <option value="Segurança/Recepção" className="bg-slate-800">
-                  Segurança/Recepção
-                </option>
-                <option value="Limpeza Geral" className="bg-slate-800">
-                  Limpeza Geral
-                </option>
-                <option value="Limpeza Hospitalar" className="bg-slate-800">
-                  Limpeza Hospitalar
-                </option>
-                <option value="Administrativo" className="bg-slate-800">
-                  Administrativo
-                </option>
-                <option value="Gerência" className="bg-slate-800">
-                  Gerência
-                </option>
-                <option value="Técnico" className="bg-slate-800">
-                  Técnico
-                </option>
-                <option value="Outros" className="bg-slate-800">
-                  Outros
-                </option>
+                {JOB_POSITIONS.map((position) => (
+                  <option key={position} value={position} className="bg-slate-800">
+                    {position}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -153,21 +176,11 @@ export function RegistrationForm({ onSubmit, onBack }: RegistrationFormProps) {
                 <option value="" className="bg-slate-800">
                   Selecione sua empresa
                 </option>
-                <option value="GPS Segurança" className="bg-slate-800">
-                  GPS Segurança
-                </option>
-                <option value="GPS Limpeza" className="bg-slate-800">
-                  GPS Limpeza
-                </option>
-                <option value="GPS Hospitalar" className="bg-slate-800">
-                  GPS Hospitalar
-                </option>
-                <option value="GPS Facilities" className="bg-slate-800">
-                  GPS Facilities
-                </option>
-                <option value="GPS Tecnologia" className="bg-slate-800">
-                  GPS Tecnologia
-                </option>
+                {COMPANIES.map((company) => (
+                  <option key={company} value={company} className="bg-slate-800">
+                    {company}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="bg-blue-900/30 rounded-xl p-4 border border-blue-500/30">
@@ -177,14 +190,13 @@ export function RegistrationForm({ onSubmit, onBack }: RegistrationFormProps) {
               </div>
             </div>
 
-            {/* Bloco de botões alterado */}
             <div className="flex flex-col sm:flex-row-reverse gap-4 pt-2">
               <button
                 type="submit"
                 disabled={!isFormValid || isSubmitted}
                 className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-blue-800 disabled:to-blue-700 disabled:opacity-50 text-white py-4 rounded-xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
               >
-                {isSubmitted ? "Cadastro Concluído" : "Finalizar Cadastro"}
+                {isSubmitted ? "Acesso Liberado!" : "Acessar Treinamento"}
               </button>
               <button
                 type="button"
@@ -195,12 +207,19 @@ export function RegistrationForm({ onSubmit, onBack }: RegistrationFormProps) {
               </button>
             </div>
           </form>
+
           {isSubmitted && (
             <div className="mt-6 p-4 bg-green-900/30 border border-green-500/30 rounded-xl">
               <p className="text-green-200 text-center">
-                ✓ Cadastro realizado com sucesso! O primeiro módulo foi
-                desbloqueado.
+                ✓ Cadastro validado com sucesso! Você será redirecionado.
               </p>
+            </div>
+          )}
+
+          {error && (
+            <div className="mt-6 p-4 bg-red-900/30 border border-red-500/30 rounded-xl flex items-center justify-center gap-3">
+              <AlertCircle className="h-5 w-5 text-red-300" />
+              <p className="text-red-200 text-center">{error}</p>
             </div>
           )}
         </div>

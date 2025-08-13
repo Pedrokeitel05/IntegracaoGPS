@@ -1,3 +1,24 @@
+import { JOB_POSITIONS, COMPANIES } from "../constants/companyData";
+
+export interface AbsenceRecord {
+  reason: string;
+  date: string;
+}
+
+export type HistoryEventType =
+  | "CRIAÇÃO"
+  | "EDIÇÃO"
+  | "BLOQUEIO"
+  | "DESBLOQUEIO"
+  | "AUSÊNCIA";
+
+export interface HistoryRecord {
+  type: HistoryEventType;
+  date: string;
+  details: string;
+  author: string;
+}
+
 export interface Employee {
   id: string;
   fullName: string;
@@ -6,7 +27,13 @@ export interface Employee {
   company: string;
   registrationDate: string;
   completedModules: string[];
-  completionDate?: string; // NOVO CAMPO ADICIONADO
+  completionDate?: string;
+  isBlocked?: boolean;
+  hiredBy?: string;
+  nonCompletionReason?: string;
+  nonCompletionDate?: string;
+  nonCompletionRecords?: AbsenceRecord[];
+  history?: HistoryRecord[];
 }
 
 export interface Module {
@@ -37,18 +64,6 @@ export interface ContentSection {
   content: string;
 }
 
-export type JobPosition =
-  | "Segurança/Recepção"
-  | "Limpeza Geral"
-  | "Limpeza Hospitalar"
-  | "Administrativo"
-  | "Gerência"
-  | "Técnico"
-  | "Outros";
+export type JobPosition = (typeof JOB_POSITIONS)[number];
 
-export type Company =
-  | "GPS Segurança"
-  | "GPS Limpeza"
-  | "GPS Hospitalar"
-  | "GPS Facilities"
-  | "GPS Tecnologia";
+export type Company = (typeof COMPANIES)[number];

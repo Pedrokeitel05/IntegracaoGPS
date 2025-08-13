@@ -1,7 +1,14 @@
 import { useState, useCallback, useEffect } from "react";
 import { database } from "../firebase";
-import { ref, set, onValue, get, push, update } from "firebase/database"; // Adicionado 'update'
-import { Employee, Module, JobPosition } from "../types";
+import { ref, onValue, get, push, update, remove } from "firebase/database";
+import {
+  Employee,
+  Module,
+  JobPosition,
+  Company,
+  HistoryRecord,
+  HistoryEventType,
+} from "../types";
 
 export function useOnboarding() {
   const [employee, setEmployee] = useState<Employee | null>(null);
@@ -25,6 +32,8 @@ export function useOnboarding() {
           ...data[key],
         }));
         setAllEmployees(employeeList);
+      } else {
+        setAllEmployees([]);
       }
     });
 
@@ -34,6 +43,27 @@ export function useOnboarding() {
       setCurrentStep("modules");
     }
   }, []);
+
+  // ESTA É A FUNÇÃO CENTRAL QUE ESTAVA EM FALTA
+  const addHistoryRecord = async (
+    employeeId: string,
+    type: HistoryEventType,
+    details: string,
+  ) => {
+    const employeeRef = ref(database, `employees/${employeeId}`);
+    const snapshot = await get(employeeRef);
+    if (snapshot.exists()) {
+      const currentEmployee = snapshot.val();
+      const newRecord: HistoryRecord = {
+        type,
+        details,
+        date: new Date().toISOString(),
+        author: "Admin",
+      };
+      const updatedHistory = [...(currentEmployee.history || []), newRecord];
+      await update(employeeRef, { history: updatedHistory });
+    }
+  };
 
   const initializeModules = useCallback(async () => {
     const modulesRef = ref(database, "modules");
@@ -139,77 +169,121 @@ export function useOnboarding() {
     (
       employeeData: Omit<
         Employee,
-        "id" | "registrationDate" | "completedModules"
+        "id" | "history" | "registrationDate" | "completedModules"
       >,
     ) => {
-      const newEmployeeData = {
+      const newEmployeeData: Partial<Employee> = {
         ...employeeData,
         registrationDate: new Date().toISOString(),
         completedModules: ["registration"],
+        isBlocked: false,
+        history: [
+          {
+            type: "CRIAÇÃO",
+            date: new Date().toISOString(),
+            details: `Registo criado por ${employeeData.hiredBy || "Admin"}.`,
+            author: employeeData.hiredBy || "Admin",
+          },
+        ],
       };
-      const newEmployeeRef = push(ref(database, "employees"), newEmployeeData);
-      const newEmployeeForState: Employee = {
-        ...newEmployeeData,
-        id: newEmployeeRef.key!,
-      };
-      localStorage.setItem("gps_employee", JSON.stringify(newEmployeeForState));
-      setEmployee(newEmployeeForState);
-      setCurrentStep("modules");
-      initializeModules();
+      push(ref(database, "employees"), newEmployeeData);
     },
-    [initializeModules],
+    [],
   );
 
-  // LÓGICA DE COMPLETAR MÓDULO ATUALIZADA
+  const loginByCpf = useCallback(
+    (loginData: {
+      cpf: string;
+      jobPosition: JobPosition;
+      company: Company;
+    }) => {
+      const foundEmployee = allEmployees.find(
+        (emp) => emp.cpf === loginData.cpf,
+      );
+      if (!foundEmployee) return { status: "CPF_NOT_FOUND" };
+      if (foundEmployee.isBlocked) return { status: "USER_BLOCKED" };
+      if (foundEmployee.jobPosition !== loginData.jobPosition)
+        return { status: "JOB_MISMATCH" };
+      if (foundEmployee.company !== loginData.company)
+        return { status: "COMPANY_MISMATCH" };
+      localStorage.setItem("gps_employee", JSON.stringify(foundEmployee));
+      setEmployee(foundEmployee);
+      setCurrentStep("modules");
+      return { status: "SUCCESS", employee: foundEmployee };
+    },
+    [allEmployees],
+  );
+
+  const updateEmployee = useCallback(
+    async (employeeId: string, updates: Partial<Employee>) => {
+      await addHistoryRecord(
+        employeeId,
+        "EDIÇÃO",
+        "Dados do colaborador foram atualizados.",
+      );
+      const employeeRef = ref(database, `employees/${employeeId}`);
+      update(employeeRef, updates);
+    },
+    [],
+  );
+
+  const toggleBlockStatus = useCallback(async (employee: Employee) => {
+    const newStatus = !employee.isBlocked;
+    const eventType = newStatus ? "BLOQUEIO" : "DESBLOQUEIO";
+    const details = `Acesso do utilizador foi ${newStatus ? "bloqueado" : "desbloqueado"}.`;
+    await addHistoryRecord(employee.id, eventType, details);
+
+    const employeeRef = ref(database, `employees/${employee.id}`);
+    update(employeeRef, { isBlocked: newStatus });
+  }, []);
+
+  const recordAbsence = useCallback(
+    async (employee: Employee, reason: string) => {
+      await addHistoryRecord(employee.id, "AUSÊNCIA", `Motivo: ${reason}`);
+      const employeeRef = ref(database, `employees/${employee.id}`);
+      update(employeeRef, { isBlocked: true });
+    },
+    [],
+  );
+
+  const deleteEmployee = useCallback((employeeId: string) => {
+    const employeeRef = ref(database, `employees/${employeeId}`);
+    remove(employeeRef);
+  }, []);
+
   const completeModule = useCallback(
     (moduleId: string) => {
       if (!employee) return;
-
-      // Garante que não há módulos duplicados na lista de concluídos
       const newCompletedModules = [
         ...new Set([...employee.completedModules, moduleId]),
       ];
-
-      // Atualiza o objeto do funcionário no estado local
       const updatedEmployee: Employee = {
         ...employee,
         completedModules: newCompletedModules,
       };
       setEmployee(updatedEmployee);
       localStorage.setItem("gps_employee", JSON.stringify(updatedEmployee));
-
-      // Filtra para saber quais módulos são exigidos para este funcionário
       const assignedModules = modules.filter(
         (module) =>
           !module.targetAreas ||
           module.targetAreas.length === 0 ||
           module.targetAreas.includes(employee.jobPosition as any),
       );
-
-      // Verifica se todos os módulos atribuídos foram concluídos
       const allModulesCompleted = assignedModules.every((module) =>
         newCompletedModules.includes(module.id),
       );
-
       const employeeUpdates: Partial<Employee> = {
         completedModules: newCompletedModules,
       };
-
       if (allModulesCompleted && !employee.completionDate) {
-        console.log(`Integração concluída para ${employee.fullName}`);
         employeeUpdates.completionDate = new Date().toISOString();
-        updatedEmployee.completionDate = employeeUpdates.completionDate; // Atualiza o estado local também
-        localStorage.setItem("gps_employee", JSON.stringify(updatedEmployee)); // Atualiza o localStorage com a data
+        updatedEmployee.completionDate = employeeUpdates.completionDate;
+        localStorage.setItem("gps_employee", JSON.stringify(updatedEmployee));
       }
-
-      // Envia as atualizações (módulos concluídos e talvez a data de conclusão) para o Firebase
       update(ref(database, `employees/${employee.id}`), employeeUpdates);
-
-      // Atualiza a lista geral de módulos (para desbloquear o próximo na UI)
-      const newModulesState = modules.map((module, index, arr) => {
+      const newModulesState = modules.map((module) => {
         let isLocked = module.isLocked;
-        // Desbloqueia o próximo módulo se o anterior foi concluído
-        const prevModule = arr.find((m) => m.order === module.order - 1);
+        const prevModule = modules.find((m) => m.order === module.order - 1);
         if (prevModule && newCompletedModules.includes(prevModule.id)) {
           isLocked = false;
         }
@@ -272,6 +346,7 @@ export function useOnboarding() {
     allEmployees,
     setCurrentStep,
     registerEmployee,
+    loginByCpf,
     completeModule,
     initializeModules,
     updateModule,
@@ -279,5 +354,9 @@ export function useOnboarding() {
     deleteModule,
     reorderModules,
     resetOnboarding,
+    updateEmployee,
+    deleteEmployee,
+    recordAbsence,
+    toggleBlockStatus,
   };
 }

@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { Employee } from '../types';
-import { Download, Calendar, Users, CheckCircle } from 'lucide-react';
+import React, { useState } from "react";
+import { Employee } from "../types";
+import { Download, Calendar, Users, CheckCircle } from "lucide-react";
 
 interface ExportPanelProps {
   allEmployees: Employee[];
 }
 
 export function ExportPanel({ allEmployees }: ExportPanelProps) {
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const filterEmployeesByDateRange = () => {
     if (!startDate || !endDate) return allEmployees;
@@ -17,7 +17,7 @@ export function ExportPanel({ allEmployees }: ExportPanelProps) {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999); // Inclui o dia todo
 
-    return allEmployees.filter(employee => {
+    return allEmployees.filter((employee) => {
       if (!employee.completionDate) return false;
       const completionDate = new Date(employee.completionDate);
       return completionDate >= start && completionDate <= end;
@@ -26,54 +26,56 @@ export function ExportPanel({ allEmployees }: ExportPanelProps) {
 
   const exportToCSV = () => {
     const filteredEmployees = filterEmployeesByDateRange();
-    
+
     if (filteredEmployees.length === 0) {
-      alert('Nenhum funcionário encontrado no período selecionado.');
+      alert("Nenhum funcionário encontrado no período selecionado.");
       return;
     }
 
     const headers = [
-      'Nome Completo',
-      'CPF',
-      'Cargo',
-      'Empresa',
-      'Data de Registro',
-      'Data de Conclusão',
-      'Módulos Concluídos',
-      'Status'
+      "Nome Completo",
+      "CPF",
+      "Cargo",
+      "Empresa",
+      "Data de Registro",
+      "Data de Conclusão",
+      "Módulos Concluídos",
+      "Status",
     ];
 
     const csvContent = [
-      headers.join(','),
-      ...filteredEmployees.map(employee => [
-        `"${employee.fullName}"`,
-        `"${employee.cpf}"`,
-        `"${employee.jobPosition}"`,
-        `"${employee.company}"`,
-        `"${new Date(employee.registrationDate).toLocaleDateString('pt-BR')}"`,
-        `"${employee.completionDate ? new Date(employee.completionDate).toLocaleDateString('pt-BR') : 'Em andamento'}"`,
-        `"${employee.completedModules.length}"`,
-        `"${employee.completionDate ? 'Concluído' : 'Em andamento'}"`
-      ].join(','))
-    ].join('\n');
+      headers.join(","),
+      ...filteredEmployees.map((employee) =>
+        [
+          `"${employee.fullName}"`,
+          `"${employee.cpf}"`,
+          `"${employee.jobPosition}"`,
+          `"${employee.company}"`,
+          `"${new Date(employee.registrationDate).toLocaleDateString("pt-BR")}"`,
+          `"${employee.completionDate ? new Date(employee.completionDate).toLocaleDateString("pt-BR") : "Em andamento"}"`,
+          `"${employee.completedModules.length}"`,
+          `"${employee.completionDate ? "Concluído" : "Em andamento"}"`,
+        ].join(","),
+      ),
+    ].join("\n");
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `funcionarios_${startDate}_${endDate}.csv`);
-    link.style.visibility = 'hidden';
+    link.setAttribute("href", url);
+    link.setAttribute("download", `funcionarios_${startDate}_${endDate}.csv`);
+    link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const completedEmployees = allEmployees.filter(emp => emp.completionDate);
-  const inProgressEmployees = allEmployees.filter(emp => !emp.completionDate);
+  const completedEmployees = allEmployees.filter((emp) => emp.completionDate);
+  const inProgressEmployees = allEmployees.filter((emp) => !emp.completionDate);
   const filteredCount = filterEmployeesByDateRange().length;
 
   return (
-    <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+    <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 max-w-5xl mx-auto">
       <div className="flex items-center space-x-3 mb-6">
         <Download className="h-6 w-6 text-blue-400" />
         <h2 className="text-xl font-bold text-white">Exportar Dados</h2>
@@ -86,7 +88,9 @@ export function ExportPanel({ allEmployees }: ExportPanelProps) {
             <Users className="h-5 w-5 text-blue-400" />
             <span className="text-blue-200">Total de Funcionários</span>
           </div>
-          <p className="text-2xl font-bold text-white mt-1">{allEmployees.length}</p>
+          <p className="text-2xl font-bold text-white mt-1">
+            {allEmployees.length}
+          </p>
         </div>
 
         <div className="bg-green-500/20 rounded-lg p-4 border border-green-500/30">
@@ -94,7 +98,9 @@ export function ExportPanel({ allEmployees }: ExportPanelProps) {
             <CheckCircle className="h-5 w-5 text-green-400" />
             <span className="text-green-200">Concluídos</span>
           </div>
-          <p className="text-2xl font-bold text-white mt-1">{completedEmployees.length}</p>
+          <p className="text-2xl font-bold text-white mt-1">
+            {completedEmployees.length}
+          </p>
         </div>
 
         <div className="bg-yellow-500/20 rounded-lg p-4 border border-yellow-500/30">
@@ -102,7 +108,9 @@ export function ExportPanel({ allEmployees }: ExportPanelProps) {
             <Calendar className="h-5 w-5 text-yellow-400" />
             <span className="text-yellow-200">Em Andamento</span>
           </div>
-          <p className="text-2xl font-bold text-white mt-1">{inProgressEmployees.length}</p>
+          <p className="text-2xl font-bold text-white mt-1">
+            {inProgressEmployees.length}
+          </p>
         </div>
       </div>
 
@@ -136,9 +144,10 @@ export function ExportPanel({ allEmployees }: ExportPanelProps) {
       {startDate && endDate && (
         <div className="mb-4 p-3 bg-blue-500/20 rounded-lg border border-blue-500/30">
           <p className="text-blue-200">
-            <strong>{filteredCount}</strong> funcionário(s) concluíram a integração entre{' '}
-            <strong>{new Date(startDate).toLocaleDateString('pt-BR')}</strong> e{' '}
-            <strong>{new Date(endDate).toLocaleDateString('pt-BR')}</strong>
+            <strong>{filteredCount}</strong> funcionário(s) concluíram a
+            integração entre{" "}
+            <strong>{new Date(startDate).toLocaleDateString("pt-BR")}</strong> e{" "}
+            <strong>{new Date(endDate).toLocaleDateString("pt-BR")}</strong>
           </p>
         </div>
       )}
