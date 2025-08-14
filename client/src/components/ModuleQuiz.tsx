@@ -1,148 +1,165 @@
-// client/src/components/ModuleQuiz.tsx
-
-import React, { useState } from 'react';
-import { Module, Employee, Question } from '../types';
-import { ArrowLeft, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { Question } from "../types";
+import { ArrowRight, Check, FileText, ArrowLeft } from "lucide-react";
 
 interface ModuleQuizProps {
-  module: Module;
-  employee: Employee;
-  onComplete: () => void;
-  onBack: () => void;
+  questions: Question[];
+  onQuizComplete: (isCorrect: boolean) => void;
+  moduleTitle: string;
 }
 
-export function ModuleQuiz({ module, onComplete, onBack }: ModuleQuizProps) {
+export function ModuleQuiz({
+  questions,
+  onQuizComplete,
+  moduleTitle,
+}: ModuleQuizProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [showResults, setShowResults] = useState(false);
-  const [score, setScore] = useState(0);
+  const [userAnswers, setUserAnswers] = useState<(number | null)[]>(
+    Array(questions.length).fill(null),
+  );
+  const [showSummary, setShowSummary] = useState(false);
 
-  const questions = module.questions || [];
-  const currentQuestion = questions[currentQuestionIndex];
-
-  const handleSelectAnswer = (questionId: string, optionId: string) => {
-    setAnswers({ ...answers, [questionId]: optionId });
+  const handleAnswerSelect = (optionIndex: number) => {
+    const newAnswers = [...userAnswers];
+    newAnswers[currentQuestionIndex] = optionIndex;
+    setUserAnswers(newAnswers);
   };
 
-  const handleNext = () => {
+  const handleNextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    } else {
+      setShowSummary(true);
     }
   };
 
   const handleSubmit = () => {
-    let correctAnswers = 0;
-    questions.forEach(q => {
-      if (answers[q.id] === q.correctOptionId) {
-        correctAnswers++;
-      }
-    });
-    setScore(correctAnswers);
-    setShowResults(true);
-
-    if (correctAnswers === questions.length) {
-      toast.success("Parabéns! Você acertou todas as perguntas.");
-      setTimeout(() => onComplete(), 2000);
-    } else {
-      toast.error("Algumas respostas estão incorretas. Tente novamente!");
-    }
+    const isCorrect = userAnswers.every(
+      (answer, index) => answer === questions[index]?.correctAnswerIndex,
+    );
+    onQuizComplete(isCorrect);
   };
 
-  const handleRetry = () => {
-    setAnswers({});
-    setCurrentQuestionIndex(0);
-    setShowResults(false);
-    setScore(0);
+  const handleBackToQuiz = () => {
+    setShowSummary(false);
   };
 
-  if (showResults) {
-    const isSuccess = score === questions.length;
+  // --- TELA DE RESUMO CORRIGIDA ---
+  if (showSummary) {
     return (
-      <div className="min-h-screen bg-blue-900 flex items-center justify-center p-4">
-        <div className="max-w-2xl mx-auto text-center bg-white/10 backdrop-blur-lg rounded-3xl p-12 border border-white/20 shadow-2xl">
-          {isSuccess ? <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" /> : <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />}
-          <h2 className="text-3xl font-bold text-white mb-4">Avaliação Concluída</h2>
-          <p className="text-blue-200 text-xl mb-6">
-            Você acertou <strong className="text-white">{score}</strong> de <strong className="text-white">{questions.length}</strong> perguntas.
-          </p>
-          {isSuccess ? (
-            <p className="text-green-300 animate-pulse">A redirecionar para os módulos...</p>
-          ) : (
-            <button onClick={handleRetry} className="group bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center space-x-2 mx-auto">
-              <RefreshCw className="h-5 w-5" />
-              <span>Tentar Novamente</span>
-            </button>
-          )}
+      <div className="text-center text-white animate-fadeInUp">
+        <h2 className="text-2xl font-bold mb-2">Resumo da Avaliação</h2>
+        <p className="text-blue-200 mb-6">
+          Confirme suas respostas para finalizar.
+        </p>
+
+        <div className="space-y-4 text-left max-w-lg mx-auto mb-8">
+          {questions.map((q, index) => {
+            const userAnswerIndex = userAnswers[index];
+            const isAnswered = userAnswerIndex !== null;
+
+            return (
+              <div
+                key={q.id || index}
+                className="p-4 bg-white/5 rounded-lg border border-white/10"
+              >
+                <p className="font-semibold text-white">
+                  {index + 1}.{" "}
+                  {q.questionText || "Texto da pergunta não encontrado."}
+                </p>
+
+                {/* Mostra a resposta de forma NEUTRA, sem indicar se está certa ou errada */}
+                {isAnswered ? (
+                  <p className="mt-2 flex items-center text-sm text-blue-300">
+                    <ArrowRight className="h-5 w-5 mr-2 text-blue-400 flex-shrink-0" />
+                    Sua resposta:{" "}
+                    {q.options?.[userAnswerIndex!]?.text || "Opção inválida"}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-sm text-yellow-400">
+                    Você não respondeu a esta pergunta.
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <button
+            onClick={handleBackToQuiz}
+            className="w-full sm:w-auto px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Voltar e Corrigir
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white px-8 py-3 rounded-xl font-semibold"
+          >
+            Confirmar e Finalizar
+          </button>
         </div>
       </div>
     );
   }
 
+  const currentQuestion = questions[currentQuestionIndex];
+  const selectedAnswer = userAnswers[currentQuestionIndex];
+
+  if (!currentQuestion) {
+    return (
+      <div className="text-white text-center">
+        Nenhuma pergunta encontrada para esta avaliação.
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-blue-900 flex flex-col">
-      {/* Cabeçalho */}
-      <div className="bg-black/20 backdrop-blur-lg border-b border-white/10 p-6">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-            <button onClick={onBack} className="flex items-center space-x-2 text-blue-200 hover:text-white transition-colors">
-                <ArrowLeft size={20} />
-                <span>Voltar aos Módulos</span>
+    <div className="animate-fadeInUp">
+      <div className="text-center mb-8">
+        <FileText className="h-12 w-12 text-blue-400 mx-auto" />
+        {/* CORREÇÃO DO TÍTULO: Agora exibe o texto da pergunta aqui */}
+        <h2 className="text-3xl font-bold text-white mt-4">
+          {currentQuestion.questionText || "Carregando pergunta..."}
+        </h2>
+        <p className="text-blue-200">
+          Pergunta {currentQuestionIndex + 1} de {questions.length}
+        </p>
+      </div>
+
+      <div className="bg-white/5 p-6 rounded-xl border border-white/10">
+        {/* O texto da pergunta foi removido daqui e colocado no h2 acima */}
+        <div className="space-y-4">
+          {currentQuestion.options?.map((option, index) => (
+            <button
+              key={option.id || index}
+              onClick={() => handleAnswerSelect(index)}
+              className={`w-full text-left p-4 rounded-lg border-2 transition-all text-base ${
+                selectedAnswer === index
+                  ? "bg-blue-500 border-blue-300 text-white font-semibold"
+                  : "bg-transparent border-white/20 text-blue-100 hover:bg-white/10"
+              }`}
+            >
+              {option.text}
             </button>
-            <div className="text-center">
-                <h1 className="text-2xl font-bold text-white">{module.title} - Avaliação</h1>
-            </div>
-            <div className="text-white font-semibold">
-                {currentQuestionIndex + 1} / {questions.length}
-            </div>
+          ))}
         </div>
       </div>
 
-      {/* Corpo da Pergunta */}
-      <div className="flex-grow flex items-center justify-center p-4">
-        <div className="max-w-4xl w-full bg-white/10 backdrop-blur-lg rounded-3xl p-8 sm:p-12 border border-white/20 shadow-2xl">
-          <p className="text-center text-xl sm:text-2xl font-semibold text-white mb-8">
-            {currentQuestion.text}
-          </p>
-          <div className="space-y-4">
-            {currentQuestion.options.map(option => (
-              <label key={option.id} className={`block p-4 rounded-xl border-2 transition-all cursor-pointer ${answers[currentQuestion.id] === option.id ? 'bg-blue-500/30 border-blue-400' : 'bg-white/10 border-transparent hover:border-blue-500/50'}`}>
-                <input
-                  type="radio"
-                  name={currentQuestion.id}
-                  value={option.id}
-                  checked={answers[currentQuestion.id] === option.id}
-                  onChange={() => handleSelectAnswer(currentQuestion.id, option.id)}
-                  className="sr-only" // Esconde o radio button original
-                />
-                <span className="text-white text-lg">{option.text}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Navegação */}
-      <div className="p-6">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <button onClick={handlePrev} disabled={currentQuestionIndex === 0} className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-            Anterior
-          </button>
-          {currentQuestionIndex === questions.length - 1 ? (
-            <button onClick={handleSubmit} disabled={!answers[currentQuestion.id]} className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-              Finalizar
-            </button>
-          ) : (
-            <button onClick={handleNext} disabled={!answers[currentQuestion.id]} className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-              Próxima
-            </button>
-          )}
-        </div>
+      <div className="mt-8 flex justify-end">
+        <button
+          onClick={handleNextQuestion}
+          disabled={selectedAnswer === null}
+          className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 disabled:opacity-50"
+        >
+          <span>
+            {currentQuestionIndex < questions.length - 1
+              ? "Próxima"
+              : "Ver Resumo"}
+          </span>
+          <ArrowRight className="h-5 w-5" />
+        </button>
       </div>
     </div>
   );

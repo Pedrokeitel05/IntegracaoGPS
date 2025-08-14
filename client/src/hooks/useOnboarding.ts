@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { database } from "../firebase";
-import { ref, onValue, get, push, update, remove } from "firebase/database";
+import { ref, onValue, get, push, update, remove, set } from "firebase/database";
+import toast from "react-hot-toast";
 import {
   Employee,
   Module,
@@ -9,6 +10,22 @@ import {
   HistoryRecord,
   HistoryEventType,
 } from "../types";
+
+// Função auxiliar para garantir que o módulo tenha todos os campos necessários
+const ensureModuleDefaults = (module: Partial<Module>, id: string, order: number): Module => {
+  return {
+    id: id,
+    title: module.title || "Módulo sem Título",
+    description: module.description || "",
+    isLocked: module.isLocked === undefined ? true : module.isLocked,
+    isCompleted: module.isCompleted || false,
+    order: module.order || order,
+    targetAreas: module.targetAreas || [],
+    questions: module.questions || [],
+    videoUrl: module.videoUrl || "",
+    isCustom: module.isCustom === undefined ? false : module.isCustom,
+  };
+};
 
 export function useOnboarding() {
   const [employee, setEmployee] = useState<Employee | null>(null);
@@ -21,20 +38,9 @@ export function useOnboarding() {
     onValue(modulesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        let moduleList: Module[] = [];
-        if (Array.isArray(data)) {
-          // Já é um array — mas vamos garantir que cada item tenha id
-          moduleList = data.map((module, index) => ({
-            id: module.id || index.toString(),
-            ...module,
-          }));
-        } else {
-          // É um objeto — convertemos para array preservando a key como id
-          moduleList = Object.keys(data).map((key) => ({
-            id: key,
-            ...data[key],
-          }));
-        }
+        const moduleList = Object.keys(data).map((key, index) => 
+          ensureModuleDefaults(data[key], key, index + 1)
+        );
         setModules(moduleList);
       } else {
         setModules([]);
@@ -62,7 +68,6 @@ export function useOnboarding() {
     }
   }, []);
 
-  // ESTA É A FUNÇÃO CENTRAL QUE ESTAVA EM FALTA
   const addHistoryRecord = async (
     employeeId: string,
     type: HistoryEventType,
@@ -85,119 +90,115 @@ export function useOnboarding() {
 
   const initializeModules = useCallback(async () => {
     const modulesRef = ref(database, "modules");
-      const snapshot = await get(modulesRef);
+    const snapshot = await get(modulesRef);
 
-      if (!snapshot.exists()) {
-        const baseModules: Module[] = [
-          {
-            id: "registration",
-            title: "Cadastro",
-            description: "Complete seu cadastro",
-            isLocked: false,
-            isCompleted: true,
-            order: 1,
-            targetAreas: [
-              "Segurança/Recepção",
-              "Limpeza Geral",
-              "Limpeza Hospitalar",
-              "Administrativo",
-              "Gerência",
-              "Técnico",
-              "Outros",
-            ],
-            isCustom: false,
-          },
-          {
-            id: "hr",
-            title: "Recursos Humanos",
-            description: "Políticas e procedimentos da empresa",
-            isLocked: false,
-            isCompleted: false,
-            order: 2,
-            targetAreas: [
-              "Segurança/Recepção",
-              "Limpeza Geral",
-              "Limpeza Hospitalar",
-              "Administrativo",
-              "Gerência",
-              "Técnico",
-              "Outros",
-            ],
-            isCustom: false,
-          },
-          {
-            id: "quality",
-            title: "Garantia de Qualidade",
-            description: "Padrões e processos de qualidade",
-            isLocked: true,
-            isCompleted: false,
-            order: 3,
-            targetAreas: [
-              "Segurança/Recepção",
-              "Limpeza Geral",
-              "Limpeza Hospitalar",
-              "Administrativo",
-              "Gerência",
-              "Técnico",
-              "Outros",
-            ],
-            isCustom: false,
-          },
-          {
-            id: "safety",
-            title: "Segurança do Trabalho e Meio Ambiente",
-            description: "Protocolos de segurança e diretrizes ambientais",
-            isLocked: true,
-            isCompleted: false,
-            order: 4,
-            targetAreas: [
-              "Segurança/Recepção",
-              "Limpeza Geral",
-              "Limpeza Hospitalar",
-              "Administrativo",
-              "Gerência",
-              "Técnico",
-              "Outros",
-            ],
-            isCustom: false,
-          },
-          {
-            id: "benefits",
-            title: "Benefícios",
-            description: "Benefícios e remuneração dos funcionários",
-            isLocked: true,
-            isCompleted: false,
-            order: 5,
-            targetAreas: [
-              "Segurança/Recepção",
-              "Limpeza Geral",
-              "Limpeza Hospitalar",
-              "Administrativo",
-              "Gerência",
-              "Técnico",
-              "Outros",
-            ],
-            isCustom: false,
-          },
-        ];
+    if (!snapshot.exists()) {
+      const baseModules: Module[] = [
+        {
+          id: "registration",
+          title: "Cadastro",
+          description: "Complete seu cadastro",
+          isLocked: false,
+          isCompleted: true,
+          order: 1,
+          targetAreas: [
+            "Segurança/Recepção",
+            "Limpeza Geral",
+            "Limpeza Hospitalar",
+            "Administrativo",
+            "Gerência",
+            "Técnico",
+            "Outros",
+          ],
+          isCustom: false,
+        },
+        {
+          id: "hr",
+          title: "Recursos Humanos",
+          description: "Políticas e procedimentos da empresa",
+          isLocked: false,
+          isCompleted: false,
+          order: 2,
+          targetAreas: [
+            "Segurança/Recepção",
+            "Limpeza Geral",
+            "Limpeza Hospitalar",
+            "Administrativo",
+            "Gerência",
+            "Técnico",
+            "Outros",
+          ],
+          isCustom: false,
+        },
+        {
+          id: "quality",
+          title: "Garantia de Qualidade",
+          description: "Padrões e processos de qualidade",
+          isLocked: true,
+          isCompleted: false,
+          order: 3,
+          targetAreas: [
+            "Segurança/Recepção",
+            "Limpeza Geral",
+            "Limpeza Hospitalar",
+            "Administrativo",
+            "Gerência",
+            "Técnico",
+            "Outros",
+          ],
+          isCustom: false,
+        },
+        {
+          id: "safety",
+          title: "Segurança do Trabalho e Meio Ambiente",
+          description: "Protocolos de segurança e diretrizes ambientais",
+          isLocked: true,
+          isCompleted: false,
+          order: 4,
+          targetAreas: [
+            "Segurança/Recepção",
+            "Limpeza Geral",
+            "Limpeza Hospitalar",
+            "Administrativo",
+            "Gerência",
+            "Técnico",
+            "Outros",
+          ],
+          isCustom: false,
+        },
+        {
+          id: "benefits",
+          title: "Benefícios",
+          description: "Benefícios e remuneração dos funcionários",
+          isLocked: true,
+          isCompleted: false,
+          order: 5,
+          targetAreas: [
+            "Segurança/Recepção",
+            "Limpeza Geral",
+            "Limpeza Hospitalar",
+            "Administrativo",
+            "Gerência",
+            "Técnico",
+            "Outros",
+          ],
+          isCustom: false,
+        },
+      ];
 
-        // Salva como objeto: { id: módulo }
-        const modulesObject = baseModules.reduce((acc, module) => {
-          acc[module.id] = module;
-          return acc;
-        }, {} as Record<string, Module>);
+      // Salva como objeto: { id: módulo }
+      const modulesObject = baseModules.reduce((acc, module) => {
+        acc[module.id] = module;
+        return acc;
+      }, {} as Record<string, Module>);
 
-        await set(modulesRef, modulesObject);
-      }
-    }, []);
+      await set(modulesRef, modulesObject);
+    }
+
+  }, []);
 
   const registerEmployee = useCallback(
-    (
-      employeeData: Omit<
-        Employee,
-        "id" | "history" | "registrationDate" | "completedModules"
-      >,
-    ) => {
+    (employeeData: Omit<Employee, "id" | "history" | "registrationDate" | "completedModules">) => {
       const newEmployeeData: Partial<Employee> = {
         ...employeeData,
         registrationDate: new Date().toISOString(),
@@ -218,93 +219,93 @@ export function useOnboarding() {
   );
 
   const loginByCpf = useCallback(
-    (loginData: {
-      cpf: string;
-      jobPosition: JobPosition;
-      company: Company;
-    }) => {
-      const foundEmployee = allEmployees.find(
-        (emp) => emp.cpf === loginData.cpf,
-      );
-      if (!foundEmployee) return { status: "CPF_NOT_FOUND" };
-      if (foundEmployee.isBlocked) return { status: "USER_BLOCKED" };
-      if (foundEmployee.jobPosition !== loginData.jobPosition)
-        return { status: "JOB_MISMATCH" };
-      if (foundEmployee.company !== loginData.company)
-        return { status: "COMPANY_MISMATCH" };
-      localStorage.setItem("gps_employee", JSON.stringify(foundEmployee));
-      setEmployee(foundEmployee);
-      setCurrentStep("modules");
-      return { status: "SUCCESS", employee: foundEmployee };
+      (loginData: {
+        cpf: string;
+        jobPosition: JobPosition;
+        company: Company;
+      }) => {
+        const foundEmployee = allEmployees.find(
+          (emp) => emp.cpf === loginData.cpf,
+        );
+        if (!foundEmployee) return { status: "CPF_NOT_FOUND" };
+        if (foundEmployee.isBlocked) return { status: "USER_BLOCKED" };
+        if (foundEmployee.jobPosition !== loginData.jobPosition)
+          return { status: "JOB_MISMATCH" };
+        if (foundEmployee.company !== loginData.company)
+          return { status: "COMPANY_MISMATCH" };
+        localStorage.setItem("gps_employee", JSON.stringify(foundEmployee));
+        setEmployee(foundEmployee);
+        setCurrentStep("modules");
+        return { status: "SUCCESS", employee: foundEmployee };
     },
     [allEmployees],
   );
 
   const updateEmployee = useCallback(
-    async (employeeId: string, updates: Partial<Employee>) => {
-      const employeeRef = ref(database, `employees/${employeeId}`);
+      async (employeeId: string, updates: Partial<Employee>) => {
+        const employeeRef = ref(database, `employees/${employeeId}`);
 
-      const snapshot = await get(employeeRef);
-      if (!snapshot.exists()) {
-        toast.error("Erro: Colaborador não encontrado.");
-        return;
-      }
-      const originalEmployee = snapshot.val() as Employee;
-
-      const editableFields: (keyof Employee)[] = [
-        "fullName",
-        "cpf",
-        "jobPosition",
-        "company",
-      ];
-
-      const sanitizedUpdates: Partial<Employee> = {};
-      editableFields.forEach((key) => {
-        if (
-          updates[key] !== undefined &&
-          updates[key] !== originalEmployee[key]
-        ) {
-          sanitizedUpdates[key] = updates[key];
+        const snapshot = await get(employeeRef);
+        if (!snapshot.exists()) {
+          toast.error("Erro: Colaborador não encontrado.");
+          return;
         }
-      });
+        const originalEmployee = snapshot.val() as Employee;
 
-      if (Object.keys(sanitizedUpdates).length === 0) {
-        toast.success("Nenhuma alteração para salvar.");
-        return;
-      }
+        const editableFields: (keyof Employee)[] = [
+          "fullName",
+          "cpf",
+          "jobPosition",
+          "company",
+        ];
 
-      // Dicionário para traduzir os nomes dos campos
-      const fieldTranslations: Record<string, string> = {
-        fullName: "Nome Completo",
-        cpf: "CPF",
-        jobPosition: "Cargo",
-        company: "Empresa",
-      };
+        const sanitizedUpdates: Partial<Employee> = {};
+        editableFields.forEach((key) => {
+          if (
+            updates[key] !== undefined &&
+            updates[key] !== originalEmployee[key]
+          ) {
+            sanitizedUpdates[key] = updates[key];
+          }
+        });
 
-      // Gera a string de detalhes usando os nomes traduzidos
-      const changes = Object.keys(sanitizedUpdates)
-        .map((key) => {
-          const typedKey = key as keyof Employee;
-          const oldValue = originalEmployee[typedKey] || "vazio";
-          const newValue = sanitizedUpdates[typedKey] || "vazio";
-          const translatedKey = fieldTranslations[typedKey] || typedKey; // Usa a tradução ou o nome original
-          return `Campo "${translatedKey}" alterado de "${oldValue}" para "${newValue}"`;
-        })
-        .join("; ");
+        if (Object.keys(sanitizedUpdates).length === 0) {
+          toast.success("Nenhuma alteração para salvar.");
+          return;
+        }
 
-      const finalUpdates: Partial<Employee> = { ...sanitizedUpdates };
-      const details = `Dados atualizados: ${changes}.`;
-      const newRecord: HistoryRecord = {
-        type: "EDIÇÃO",
-        details,
-        date: new Date().toISOString(),
-        author: "Admin",
-      };
+        // Dicionário para traduzir os nomes dos campos
+        const fieldTranslations: Record<string, string> = {
+          fullName: "Nome Completo",
+          cpf: "CPF",
+          jobPosition: "Cargo",
+          company: "Empresa",
+        };
 
-      const updatedHistory = [...(originalEmployee.history || []), newRecord];
-      finalUpdates.history = updatedHistory;
+        // Gera a string de detalhes usando os nomes traduzidos
+        const changes = Object.keys(sanitizedUpdates)
+          .map((key) => {
+            const typedKey = key as keyof Employee;
+            const oldValue = originalEmployee[typedKey] || "vazio";
+            const newValue = sanitizedUpdates[typedKey] || "vazio";
+            const translatedKey = fieldTranslations[typedKey] || typedKey; // Usa a tradução ou o nome original
+            return `Campo "${translatedKey}" alterado de "${oldValue}" para "${newValue}"`;
+          })
+          .join("; ");
 
-      await update(employeeRef, finalUpdates);
+        const finalUpdates: Partial<Employee> = { ...sanitizedUpdates };
+        const details = `Dados atualizados: ${changes}.`;
+        const newRecord: HistoryRecord = {
+          type: "EDIÇÃO",
+          details,
+          date: new Date().toISOString(),
+          author: "Admin",
+        };
+
+        const updatedHistory = [...(originalEmployee.history || []), newRecord];
+        finalUpdates.history = updatedHistory;
+
+        await update(employeeRef, finalUpdates);
     },
     [],
   );
@@ -320,10 +321,10 @@ export function useOnboarding() {
   }, []);
 
   const recordAbsence = useCallback(
-    async (employee: Employee, reason: string) => {
-      await addHistoryRecord(employee.id, "AUSÊNCIA", `Motivo: ${reason}`);
-      const employeeRef = ref(database, `employees/${employee.id}`);
-      update(employeeRef, { isBlocked: true });
+      async (employee: Employee, reason: string) => {
+        await addHistoryRecord(employee.id, "AUSÊNCIA", `Motivo: ${reason}`);
+        const employeeRef = ref(database, `employees/${employee.id}`);
+        update(employeeRef, { isBlocked: true });
     },
     [],
   );
@@ -337,79 +338,90 @@ export function useOnboarding() {
     (moduleId: string) => {
       if (!employee) return;
       const newCompletedModules = [
-        ...new Set([...employee.completedModules, moduleId]),
+        ...new Set([...(employee.completedModules || []), moduleId]),
       ];
+
       const updatedEmployee: Employee = {
         ...employee,
         completedModules: newCompletedModules,
       };
+
       setEmployee(updatedEmployee);
       localStorage.setItem("gps_employee", JSON.stringify(updatedEmployee));
+
+      const employeeUpdates: Partial<Employee> = {
+        completedModules: newCompletedModules,
+      };
+
       const assignedModules = modules.filter(
         (module) =>
           !module.targetAreas ||
           module.targetAreas.length === 0 ||
           module.targetAreas.includes(employee.jobPosition as any),
       );
+
       const allModulesCompleted = assignedModules.every((module) =>
         newCompletedModules.includes(module.id),
       );
-      const employeeUpdates: Partial<Employee> = {
-        completedModules: newCompletedModules,
-      };
+
       if (allModulesCompleted && !employee.completionDate) {
         employeeUpdates.completionDate = new Date().toISOString();
         updatedEmployee.completionDate = employeeUpdates.completionDate;
         localStorage.setItem("gps_employee", JSON.stringify(updatedEmployee));
       }
+
       update(ref(database, `employees/${employee.id}`), employeeUpdates);
-      const newModulesState = modules.map((module) => {
-        let isLocked = module.isLocked;
-        const prevModule = modules.find((m) => m.order === module.order - 1);
-        if (prevModule && newCompletedModules.includes(prevModule.id)) {
-          isLocked = false;
+
+      // --- LÓGICA DE DESBLOQUEIO CORRIGIDA ---
+      const currentModule = modules.find(m => m.id === moduleId);
+      if (currentModule) {
+        const nextModule = modules.sort((a, b) => a.order - b.order).find(m => m.order === currentModule.order + 1);
+        if (nextModule) {
+          update(ref(database, `modules/${nextModule.id}`), { isLocked: false });
         }
-        return {
-          ...module,
-          isCompleted: newCompletedModules.includes(module.id),
-          isLocked,
-        };
-      });
-      set(ref(database, "modules"), newModulesState);
+      }
     },
     [employee, modules],
   );
 
   const updateModule = useCallback(
     async (moduleId: string, updates: Partial<Module>) => {
-      await update(ref(database, `modules/${moduleId}`), updates);
+      const moduleRef = ref(database, `modules/${moduleId}`);
+      await update(moduleRef, updates);
     },
     [],
   );
 
+  // --- FUNÇÃO DE ADICIONAR MÓDULO CORRIGIDA ---
   const addModule = useCallback(
-    async (newModule: Omit<Module, "id">) => {
-      const moduleId = Date.now().toString();
-      const moduleWithId: Module = { ...newModule, id: moduleId };
-      await update(ref(database, `modules/${moduleId}`), moduleWithId);
+    async (newModuleData: Omit<Module, "id">) => {
+      const newModuleRef = push(ref(database, "modules"));
+      const moduleId = newModuleRef.key;
+
+      if (moduleId) {
+        const highestOrder = modules.reduce((max, m) => Math.max(max, m.order || 0), 0);
+        const finalModule = ensureModuleDefaults(newModuleData, moduleId, highestOrder + 1);
+
+        await set(newModuleRef, finalModule);
+      }
     },
-    [],
+    [modules], 
   );
 
-  const deleteModule = useCallback(
-    async (moduleId: string) => {
-      await remove(ref(database, `modules/${moduleId}`));
-    },
-    [],
-  );
-
-  const reorderModules = useCallback((reorderedModules: Module[]) => {
-    const modulesWithNewOrder = reorderedModules.map((module, index) => ({
-      ...module,
-      order: index + 1,
-    }));
-    set(ref(database, "modules"), modulesWithNewOrder);
+  const deleteModule = useCallback(async (moduleId: string) => {
+    await remove(ref(database, `modules/${moduleId}`));
   }, []);
+
+  const reorderModules = useCallback(
+    async (reorderedModules: Module[]) => {
+      const updates: { [key: string]: any } = {};
+      reorderedModules.forEach((module, index) => {
+        updates[`/${module.id}/order`] = index + 1;
+      });
+      await update(ref(database, "modules"), updates);
+    },
+    [],
+  );
 
   const resetOnboarding = useCallback(() => {
     localStorage.removeItem("gps_employee");
