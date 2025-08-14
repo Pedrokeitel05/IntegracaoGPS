@@ -1,5 +1,17 @@
 import { JOB_POSITIONS, COMPANIES } from "../constants/companyData";
 
+export interface QuestionOption {
+  id: string;
+  text: string;
+}
+
+export interface Question {
+  id: string;
+  text: string;
+  options: QuestionOption[];
+  correctOptionId: string;
+}
+
 export interface AbsenceRecord {
   reason: string;
   date: string;
@@ -48,6 +60,7 @@ export interface Module {
   order: number;
   targetAreas: JobPosition[];
   isCustom?: boolean;
+  questions?: Question[];
 }
 
 export interface ModuleContent {

@@ -9,6 +9,8 @@ import {
   Maximize,
 } from "lucide-react";
 
+import { Module } from "../types";
+
 declare global {
   interface Window {
     YT: any;
@@ -16,14 +18,14 @@ declare global {
   }
 }
 interface ModuleContentProps {
-  moduleId: string;
-  onComplete: () => void;
+  module: Module;
+  onVideoComplete: (moduleId: string) => void;
   onBack: () => void;
 }
 
 export function ModuleContent({
-  moduleId,
-  onComplete,
+  module,
+  onVideoComplete,
   onBack,
 }: ModuleContentProps) {
   const [isVideoCompleted, setIsVideoCompleted] = useState(false);
@@ -35,43 +37,12 @@ export function ModuleContent({
   const playerRef = useRef<any>(null);
   const [apiReady, setApiReady] = useState(false);
 
-  const getModuleData = (id: string) => {
-    const modules = {
-      hr: {
-        title: "Recursos Humanos",
-        description:
-          "Conheça a cultura, valores e políticas da empresa GPS Group.",
-      },
-      quality: {
-        title: "Garantia de Qualidade",
-        description:
-          "Aprenda sobre nossos padrões de qualidade e processos de melhoria contínua.",
-      },
-      safety: {
-        title: "Segurança do Trabalho e Meio Ambiente",
-        description: "Protocolos de segurança e responsabilidade ambiental.",
-      },
-      benefits: {
-        title: "Benefícios",
-        description:
-          "Conheça todos os benefícios e vantagens oferecidos aos funcionários.",
-      },
-      "asset-protection": {
-        title: "Proteção de Ativos",
-        description: "Fundamentos de segurança e proteção patrimonial.",
-      },
-      infrastructure: {
-        title: "Serviços de Infraestrutura",
-        description: "Padrões de limpeza e manutenção de infraestrutura.",
-      },
-      "hospital-care": {
-        title: "Cuidados Hospitalares",
-        description: "Protocolos especializados para ambientes hospitalares.",
-      },
-    };
-    return modules[id as keyof typeof modules] || modules.hr;
+  const getYouTubeId = (url: string | undefined): string => {
+    if (!url) return "2SNsiRGhWPs"; // Vídeo padrão se nenhum for fornecido
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : "2SNsiRGhWPs";
   };
-  const moduleData = getModuleData(moduleId);
 
   useEffect(() => {
     if (!window.YT) {
@@ -90,7 +61,7 @@ export function ModuleContent({
       playerRef.current = new window.YT.Player("youtube-player", {
         height: "100%",
         width: "100%",
-        videoId: "2SNsiRGhWPs",
+        videoId: getYouTubeId(module.videoUrl),
         playerVars: {
           controls: 0,
           disablekb: 1,
@@ -159,7 +130,7 @@ export function ModuleContent({
   };
   const handleComplete = () => {
     setIsCompleted(true);
-    setTimeout(() => onComplete(), 1500);
+    setTimeout(() => onVideoComplete(module.id), 1500);
   };
   const formatTime = (seconds: number) =>
     `${Math.floor(seconds / 60)}:${Math.floor(seconds % 60)
@@ -182,10 +153,10 @@ export function ModuleContent({
             </button>
             <div className="text-center flex-1 sm:flex-none">
               <h1 className="text-lg sm:text-2xl font-bold text-white">
-                {moduleData.title}
+                {module.title}
               </h1>
               <p className="text-blue-200 text-sm sm:text-base hidden sm:block">
-                {moduleData.description}
+                {module.description}
               </p>
             </div>
             <div className="text-right w-full sm:w-auto">
@@ -279,7 +250,7 @@ export function ModuleContent({
             </div>
             <div className="text-center mb-6 sm:mb-8 px-4">
               <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">
-                Vídeo de Treinamento - {moduleData.title}
+                Vídeo de Integração - {module.title}
               </h2>
               <p className="text-blue-200 mb-4 sm:mb-6 text-sm sm:text-base">
                 Assista ao vídeo completo para prosseguir para o próximo módulo.
@@ -289,10 +260,6 @@ export function ModuleContent({
                   <p className="text-blue-100 text-xs sm:text-sm">
                     ⚠️ Você deve assistir ao vídeo completo para desbloquear o
                     próximo módulo.
-                    <span className="hidden sm:inline">
-                      {" "}
-                      Os controles de velocidade e avanço estão desabilitados.
-                    </span>
                   </p>
                 </div>
               )}
@@ -317,7 +284,7 @@ export function ModuleContent({
               Módulo Concluído!
             </h2>
             <p className="text-blue-200 mb-6 sm:mb-8 text-sm sm:text-base">
-              Parabéns! Você concluiu com sucesso o módulo {moduleData.title}.
+              Parabéns! Você concluiu com sucesso o módulo {module.title}.
             </p>
             <div className="animate-pulse">
               <p className="text-green-400 font-medium text-sm sm:text-base">

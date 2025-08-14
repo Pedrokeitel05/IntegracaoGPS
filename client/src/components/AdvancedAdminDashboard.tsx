@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import {
   Settings,
@@ -20,7 +20,7 @@ import {
   CheckCircle,
   UserPlus,
 } from "lucide-react";
-import { Module, JobPosition, Employee, AbsenceRecord } from "../types";
+import { Module, JobPosition, Employee, AbsenceRecord, Question } from "../types";
 import { ExportPanel } from "./ExportPanel";
 import { EmployeeRegistrationPanel } from "./EmployeeRegistrationPanel";
 import { EmployeeManagementPanel } from "./EmployeeManagementPanel";
@@ -48,12 +48,13 @@ interface ModuleFormData {
   targetAreas: JobPosition[];
   isLocked: boolean;
   order: number;
+  questions: Question[];
 }
 
 export function AdvancedAdminDashboard({
   onLogout,
-  modules,
-  employees,
+  modules = [],
+  employees = [],
   onRegisterEmployee,
   onUpdateEmployee,
   onDeleteEmployee,
@@ -67,6 +68,9 @@ export function AdvancedAdminDashboard({
   const [activeTab, setActiveTab] = useState<
     "modules" | "export" | "register" | "management"
   >("modules");
+  const [areaSearchTerm, setAreaSearchTerm] = useState("");
+  const [areQuestionsExpanded, setAreQuestionsExpanded] = useState(false);
+  const [areAreasExpanded, setAreAreasExpanded] = useState(false);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState<ModuleFormData>({
@@ -76,7 +80,21 @@ export function AdvancedAdminDashboard({
     targetAreas: [],
     isLocked: false,
     order: 1,
+    questions: [],
   });
+
+  const isModalOpen = !!editingModule || showAddForm;
+
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isModalOpen]);
 
   const sortedModules = [...(modules || [])].sort((a, b) => a.order - b.order);
 
@@ -89,6 +107,7 @@ export function AdvancedAdminDashboard({
       targetAreas: module.targetAreas || [],
       isLocked: module.isLocked,
       order: module.order,
+      questions: module.questions || [],
     });
     setShowAddForm(true);
   };
@@ -135,7 +154,61 @@ export function AdvancedAdminDashboard({
       targetAreas: [],
       isLocked: false,
       order: 1,
+      questions: [],
     });
+    setAreQuestionsExpanded(false);
+    setAreaSearchTerm("");
+    setAreAreasExpanded(false);
+  };
+
+  const handleQuestionChange = (qIndex: number, text: string) => {
+    const newQuestions = [...formData.questions];
+    newQuestions[qIndex].text = text;
+    setFormData({ ...formData, questions: newQuestions });
+  };
+
+  const handleOptionChange = (qIndex: number, oIndex: number, text: string) => {
+    const newQuestions = [...formData.questions];
+    if (!newQuestions[qIndex].options) newQuestions[qIndex].options = [];
+    while (newQuestions[qIndex].options.length <= oIndex) {
+      newQuestions[qIndex].options.push({ id: `o_temp_${Date.now()}_${newQuestions[qIndex].options.length}`, text: ""});
+    }
+    newQuestions[qIndex].options[oIndex].text = text;
+    setFormData({ ...formData, questions: newQuestions });
+  };
+
+  const handleCorrectOptionChange = (qIndex: number, optionId: string) => {
+    const newQuestions = [...formData.questions];
+    newQuestions[qIndex].correctOptionId = optionId;
+    setFormData({ ...formData, questions: newQuestions });
+  };
+
+  const addQuestion = () => {
+    const timestamp = Date.now();
+    const newQuestion: Question = {
+      id: `q_${timestamp}`,
+      text: "",
+      // Cria 4 opções de resposta por defeito
+      options: [
+        { id: `o_${timestamp}_1`, text: "" },
+        { id: `o_${timestamp}_2`, text: "" },
+        { id: `o_${timestamp}_3`, text: "" },
+        { id: `o_${timestamp}_4`, text: "" },
+      ],
+      correctOptionId: `o_${timestamp}_1`,
+    };
+    setFormData({
+      ...formData,
+      questions: [...formData.questions, newQuestion],
+    });
+    setAreQuestionsExpanded(true);
+  };
+
+  const removeQuestion = (qIndex: number) => {
+    const newQuestions = formData.questions.filter(
+      (_, index) => index !== qIndex,
+    );
+    setFormData({ ...formData, questions: newQuestions });
   };
 
   const handleMove = (direction: "up" | "down", module: Module) => {
@@ -163,6 +236,18 @@ export function AdvancedAdminDashboard({
 
   const completedEmployees = employees.filter((emp) => emp.completionDate);
   const inProgressEmployees = employees.filter((emp) => !emp.completionDate);
+
+  const filteredJobPositions = JOB_POSITIONS.filter((position) =>
+    position.toLowerCase().includes(areaSearchTerm.toLowerCase()),
+  );
+
+  const handleSelectAllAreas = (checked: boolean) => {
+    if (checked) {
+      setFormData({ ...formData, targetAreas: [...JOB_POSITIONS] });
+    } else {
+      setFormData({ ...formData, targetAreas: [] });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-blue-900">
@@ -403,6 +488,7 @@ export function AdvancedAdminDashboard({
                     </button>
                   </div>
                   <div className="space-y-6">
+                    {/* Título do Módulo */}
                     <div>
                       <label className="block text-sm font-medium text-blue-200 mb-2">
                         Título do Módulo
@@ -417,6 +503,8 @@ export function AdvancedAdminDashboard({
                         placeholder="Ex: Recursos Humanos"
                       />
                     </div>
+
+                    {/* Descrição */}
                     <div>
                       <label className="block text-sm font-medium text-blue-200 mb-2">
                         Descrição
@@ -434,6 +522,7 @@ export function AdvancedAdminDashboard({
                         placeholder="Descreva o conteúdo do módulo"
                       />
                     </div>
+                    {/* URL do Vídeo */}
                     <div>
                       <label className="block text-sm font-medium text-blue-200 mb-2">
                         URL do Vídeo (opcional)
@@ -448,79 +537,265 @@ export function AdvancedAdminDashboard({
                         placeholder="https://youtube.com/watch?v=..."
                       />
                     </div>
+
+                    {/* Áreas de Trabalho */}
                     <div>
                       <label className="block text-sm font-medium text-blue-200 mb-3">
                         Áreas de Trabalho
                       </label>
-                      <div className="grid grid-cols-2 gap-3">
-                        {JOB_POSITIONS.map((position) => (
-                          <label
-                            key={position}
-                            className="flex items-center space-x-3 cursor-pointer group"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={formData.targetAreas.includes(position)}
-                              onChange={(e) =>
-                                handleTargetAreaChange(
+
+                      <input
+                        type="text"
+                        value={areaSearchTerm}
+                        onChange={(e) => setAreaSearchTerm(e.target.value)}
+                        placeholder="Pesquisar cargo..."
+                        className="w-full bg-white/10 p-2 rounded mb-3 text-white placeholder-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                      />
+
+                      <div className="mb-3">
+                        <label className="flex items-center space-x-3 cursor-pointer group">
+                          <input
+                            type="checkbox"
+                            checked={
+                              formData.targetAreas.length ===
+                              JOB_POSITIONS.length
+                            }
+                            onChange={(e) =>
+                              handleSelectAllAreas(e.target.checked)
+                            }
+                            className="peer absolute h-0 w-0 opacity-0"
+                          />
+                          <div className="h-5 w-5 rounded-md border-2 border-blue-400 bg-transparent transition-all duration-300 group-hover:border-blue-300 peer-checked:bg-blue-400 peer-checked:border-transparent flex items-center justify-center">
+                            <svg
+                              className="w-3 h-3 text-blue-900 hidden peer-checked:block"
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                          </div>
+                          <span className="text-white text-sm font-semibold group-hover:text-blue-200 transition-colors">
+                            Selecionar Todos
+                          </span>
+                        </label>
+                      </div>
+
+                      {/* Novo container com posicionamento relativo */}
+                      <div className="relative">
+                        {/* A grelha de cargos */}
+                        <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-2">
+                          {(areAreasExpanded || areaSearchTerm
+                            ? filteredJobPositions
+                            : filteredJobPositions.slice(0, 4)
+                          ).map((position) => (
+                            <label
+                              key={position}
+                              className="flex items-center space-x-3 cursor-pointer group"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.targetAreas.includes(
                                   position,
-                                  e.target.checked,
-                                )
-                              }
-                              className="peer absolute h-0 w-0 opacity-0"
-                            />
-                            <div className="h-5 w-5 rounded-md border-2 border-blue-400 bg-transparent transition-all duration-300 group-hover:border-blue-300 peer-checked:bg-blue-400 peer-checked:border-transparent flex items-center justify-center">
-                              <svg
-                                className="w-3 h-3 text-blue-900 hidden peer-checked:block"
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
+                                )}
+                                onChange={(e) =>
+                                  handleTargetAreaChange(
+                                    position,
+                                    e.target.checked,
+                                  )
+                                }
+                                className="peer absolute h-0 w-0 opacity-0"
+                              />
+                              <div className="h-5 w-5 rounded-md border-2 border-blue-400 bg-transparent transition-all duration-300 group-hover:border-blue-300 peer-checked:bg-blue-400 peer-checked:border-transparent flex items-center justify-center">
+                                <svg
+                                  className="w-3 h-3 text-blue-900 hidden peer-checked:block"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                              </div>
+                              <span className="text-white text-sm group-hover:text-blue-200 transition-colors">
+                                {position}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+
+                        {/* A CAMADA DE GRADIENTE - só aparece quando a lista está recolhida */}
+                        {!areAreasExpanded &&
+                          filteredJobPositions.length > 4 &&
+                          !areaSearchTerm && (
+                            <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-blue-900 to-transparent pointer-events-none" />
+                          )}
+                      </div>
+
+                      {/* Botão para expandir/recolher */}
+                      {filteredJobPositions.length > 4 && !areaSearchTerm && (
+                        <div className="flex justify-center">
+                          {" "}
+                          {/* Div para centralizar */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setAreAreasExpanded(!areAreasExpanded)
+                            }
+                            className="text-blue-300 underline mt-3"
+                          >
+                            {areAreasExpanded ? "Ver Menos" : "Ver Mais"}{" "}
+                            {/* Texto alterado */}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Perguntas de Avaliação */}
+                    <div>
+                      <label className="block text-sm font-medium text-blue-200 mb-3">
+                        Perguntas de Avaliação
+                      </label>
+                      <div className="space-y-4">
+                        {/* Mostra todas as perguntas ou apenas as 2 primeiras, dependendo do estado */}
+                        {(areQuestionsExpanded
+                          ? formData.questions
+                          : formData.questions.slice(0, 2)
+                        ).map((q, qIndex) => (
+                          <div
+                            key={q.id}
+                            className="p-4 bg-white/5 rounded-lg border border-white/10"
+                          >
+                            {/* ... O conteúdo da pergunta (inputs, etc.) permanece o mesmo ... */}
+                            <div className="flex items-center justify-between mb-2">
+                              <label className="text-white">
+                                Pergunta {qIndex + 1}
+                              </label>
+                              <button
+                                onClick={() => removeQuestion(qIndex)}
+                                className="text-red-400 hover:text-red-300"
                               >
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                              </svg>
+                                <Trash2 size={16} />
+                              </button>
                             </div>
-                            <span className="text-white text-sm group-hover:text-blue-200 transition-colors">
-                              {position}
-                            </span>
-                          </label>
+                            <input
+                              type="text"
+                              placeholder="Digite o texto da pergunta"
+                              value={q.text}
+                              onChange={(e) =>
+                                handleQuestionChange(qIndex, e.target.value)
+                              }
+                              className="w-full bg-white/10 p-2 rounded mb-2 text-white"
+                            />
+                            <div className="space-y-2">
+                              {[0, 1, 2, 3].map((oIndex) => {
+                                const option = q.options[oIndex] || {
+                                  id: `temp_${oIndex}`,
+                                  text: "",
+                                };
+                                return (
+                                  <div
+                                    key={option.id}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <input
+                                      type="radio"
+                                      name={`correct_${q.id}`}
+                                      checked={q.correctOptionId === option.id}
+                                      onChange={() =>
+                                        handleCorrectOptionChange(
+                                          qIndex,
+                                          option.id,
+                                        )
+                                      }
+                                    />
+                                    <input
+                                      type="text"
+                                      placeholder={`Resposta ${oIndex + 1}`}
+                                      value={option.text}
+                                      onChange={(e) =>
+                                        handleOptionChange(
+                                          qIndex,
+                                          oIndex,
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="w-full bg-white/10 p-2 rounded text-white"
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
                         ))}
+
+                        {/* Botão "Ver mais" / "Ver menos" */}
+                        {formData.questions.length > 2 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setAreQuestionsExpanded(!areQuestionsExpanded)
+                            }
+                            className="text-blue-300 underline"
+                          >
+                            {areQuestionsExpanded
+                              ? "Ver menos"
+                              : `Ver mais ${formData.questions.length - 2} pergunta(s)...`}
+                          </button>
+                        )}
+
+                        {/* Botão para adicionar nova pergunta */}
+                        <button
+                          type="button"
+                          onClick={addQuestion}
+                          className="text-blue-300 underline block pt-2"
+                        >
+                          + Adicionar Pergunta
+                        </button>
                       </div>
                     </div>
-                    <label className="flex items-center space-x-3 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        id="isLocked"
-                        checked={formData.isLocked}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            isLocked: e.target.checked,
-                          })
-                        }
-                        className="peer absolute h-0 w-0 opacity-0"
-                      />
-                      <div className="h-5 w-5 rounded-md border-2 border-blue-400 bg-transparent transition-all duration-300 group-hover:border-blue-300 peer-checked:bg-blue-400 peer-checked:border-transparent flex items-center justify-center">
-                        <svg
-                          className="w-3 h-3 text-blue-900 hidden peer-checked:block"
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      </div>
-                      <span className="text-white text-sm group-hover:text-blue-200 transition-colors">
-                        Módulo bloqueado inicialmente
-                      </span>
-                    </label>
+
+                    {/* Módulo bloqueado inicialmente */}
+                    <div>
+                      <label className="flex items-center space-x-3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          id="isLocked"
+                          checked={formData.isLocked}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              isLocked: e.target.checked,
+                            })
+                          }
+                          className="peer absolute h-0 w-0 opacity-0"
+                        />
+                        <div className="h-5 w-5 rounded-md border-2 border-blue-400 bg-transparent transition-all duration-300 group-hover:border-blue-300 peer-checked:bg-blue-400 peer-checked:border-transparent flex items-center justify-center">
+                          <svg
+                            className="w-3 h-3 text-blue-900 hidden peer-checked:block"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        </div>
+                        <span className="text-white text-sm group-hover:text-blue-200 transition-colors">
+                          Módulo bloqueado inicialmente
+                        </span>
+                      </label>
+                    </div>
                   </div>
                   <div className="flex space-x-4 mt-8">
                     <button

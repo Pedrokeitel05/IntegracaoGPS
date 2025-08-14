@@ -20,7 +20,25 @@ export function useOnboarding() {
     const modulesRef = ref(database, "modules");
     onValue(modulesRef, (snapshot) => {
       const data = snapshot.val();
-      if (data) setModules(Array.isArray(data) ? data : Object.values(data));
+      if (data) {
+        let moduleList: Module[] = [];
+        if (Array.isArray(data)) {
+          // Já é um array — mas vamos garantir que cada item tenha id
+          moduleList = data.map((module, index) => ({
+            id: module.id || index.toString(),
+            ...module,
+          }));
+        } else {
+          // É um objeto — convertemos para array preservando a key como id
+          moduleList = Object.keys(data).map((key) => ({
+            id: key,
+            ...data[key],
+          }));
+        }
+        setModules(moduleList);
+      } else {
+        setModules([]);
+      }
     });
 
     const employeesRef = ref(database, "employees");
@@ -67,103 +85,111 @@ export function useOnboarding() {
 
   const initializeModules = useCallback(async () => {
     const modulesRef = ref(database, "modules");
-    const snapshot = await get(modulesRef);
-    if (!snapshot.exists()) {
-      const baseModules: Module[] = [
-        {
-          id: "registration",
-          title: "Cadastro",
-          description: "Complete seu cadastro",
-          isLocked: false,
-          isCompleted: true,
-          order: 1,
-          targetAreas: [
-            "Segurança/Recepção",
-            "Limpeza Geral",
-            "Limpeza Hospitalar",
-            "Administrativo",
-            "Gerência",
-            "Técnico",
-            "Outros",
-          ],
-          isCustom: false,
-        },
-        {
-          id: "hr",
-          title: "Recursos Humanos",
-          description: "Políticas e procedimentos da empresa",
-          isLocked: false,
-          isCompleted: false,
-          order: 2,
-          targetAreas: [
-            "Segurança/Recepção",
-            "Limpeza Geral",
-            "Limpeza Hospitalar",
-            "Administrativo",
-            "Gerência",
-            "Técnico",
-            "Outros",
-          ],
-          isCustom: false,
-        },
-        {
-          id: "quality",
-          title: "Garantia de Qualidade",
-          description: "Padrões e processos de qualidade",
-          isLocked: true,
-          isCompleted: false,
-          order: 3,
-          targetAreas: [
-            "Segurança/Recepção",
-            "Limpeza Geral",
-            "Limpeza Hospitalar",
-            "Administrativo",
-            "Gerência",
-            "Técnico",
-            "Outros",
-          ],
-          isCustom: false,
-        },
-        {
-          id: "safety",
-          title: "Segurança do Trabalho e Meio Ambiente",
-          description: "Protocolos de segurança e diretrizes ambientais",
-          isLocked: true,
-          isCompleted: false,
-          order: 4,
-          targetAreas: [
-            "Segurança/Recepção",
-            "Limpeza Geral",
-            "Limpeza Hospitalar",
-            "Administrativo",
-            "Gerência",
-            "Técnico",
-            "Outros",
-          ],
-          isCustom: false,
-        },
-        {
-          id: "benefits",
-          title: "Benefícios",
-          description: "Benefícios e remuneração dos funcionários",
-          isLocked: true,
-          isCompleted: false,
-          order: 5,
-          targetAreas: [
-            "Segurança/Recepção",
-            "Limpeza Geral",
-            "Limpeza Hospitalar",
-            "Administrativo",
-            "Gerência",
-            "Técnico",
-            "Outros",
-          ],
-          isCustom: false,
-        },
-      ];
-      await set(modulesRef, baseModules);
-    }
-  }, []);
+      const snapshot = await get(modulesRef);
+
+      if (!snapshot.exists()) {
+        const baseModules: Module[] = [
+          {
+            id: "registration",
+            title: "Cadastro",
+            description: "Complete seu cadastro",
+            isLocked: false,
+            isCompleted: true,
+            order: 1,
+            targetAreas: [
+              "Segurança/Recepção",
+              "Limpeza Geral",
+              "Limpeza Hospitalar",
+              "Administrativo",
+              "Gerência",
+              "Técnico",
+              "Outros",
+            ],
+            isCustom: false,
+          },
+          {
+            id: "hr",
+            title: "Recursos Humanos",
+            description: "Políticas e procedimentos da empresa",
+            isLocked: false,
+            isCompleted: false,
+            order: 2,
+            targetAreas: [
+              "Segurança/Recepção",
+              "Limpeza Geral",
+              "Limpeza Hospitalar",
+              "Administrativo",
+              "Gerência",
+              "Técnico",
+              "Outros",
+            ],
+            isCustom: false,
+          },
+          {
+            id: "quality",
+            title: "Garantia de Qualidade",
+            description: "Padrões e processos de qualidade",
+            isLocked: true,
+            isCompleted: false,
+            order: 3,
+            targetAreas: [
+              "Segurança/Recepção",
+              "Limpeza Geral",
+              "Limpeza Hospitalar",
+              "Administrativo",
+              "Gerência",
+              "Técnico",
+              "Outros",
+            ],
+            isCustom: false,
+          },
+          {
+            id: "safety",
+            title: "Segurança do Trabalho e Meio Ambiente",
+            description: "Protocolos de segurança e diretrizes ambientais",
+            isLocked: true,
+            isCompleted: false,
+            order: 4,
+            targetAreas: [
+              "Segurança/Recepção",
+              "Limpeza Geral",
+              "Limpeza Hospitalar",
+              "Administrativo",
+              "Gerência",
+              "Técnico",
+              "Outros",
+            ],
+            isCustom: false,
+          },
+          {
+            id: "benefits",
+            title: "Benefícios",
+            description: "Benefícios e remuneração dos funcionários",
+            isLocked: true,
+            isCompleted: false,
+            order: 5,
+            targetAreas: [
+              "Segurança/Recepção",
+              "Limpeza Geral",
+              "Limpeza Hospitalar",
+              "Administrativo",
+              "Gerência",
+              "Técnico",
+              "Outros",
+            ],
+            isCustom: false,
+          },
+        ];
+
+        // Salva como objeto: { id: módulo }
+        const modulesObject = baseModules.reduce((acc, module) => {
+          acc[module.id] = module;
+          return acc;
+        }, {} as Record<string, Module>);
+
+        await set(modulesRef, modulesObject);
+      }
+    }, []);
 
   const registerEmployee = useCallback(
     (
@@ -216,13 +242,69 @@ export function useOnboarding() {
 
   const updateEmployee = useCallback(
     async (employeeId: string, updates: Partial<Employee>) => {
-      await addHistoryRecord(
-        employeeId,
-        "EDIÇÃO",
-        "Dados do colaborador foram atualizados.",
-      );
       const employeeRef = ref(database, `employees/${employeeId}`);
-      update(employeeRef, updates);
+
+      const snapshot = await get(employeeRef);
+      if (!snapshot.exists()) {
+        toast.error("Erro: Colaborador não encontrado.");
+        return;
+      }
+      const originalEmployee = snapshot.val() as Employee;
+
+      const editableFields: (keyof Employee)[] = [
+        "fullName",
+        "cpf",
+        "jobPosition",
+        "company",
+      ];
+
+      const sanitizedUpdates: Partial<Employee> = {};
+      editableFields.forEach((key) => {
+        if (
+          updates[key] !== undefined &&
+          updates[key] !== originalEmployee[key]
+        ) {
+          sanitizedUpdates[key] = updates[key];
+        }
+      });
+
+      if (Object.keys(sanitizedUpdates).length === 0) {
+        toast.success("Nenhuma alteração para salvar.");
+        return;
+      }
+
+      // Dicionário para traduzir os nomes dos campos
+      const fieldTranslations: Record<string, string> = {
+        fullName: "Nome Completo",
+        cpf: "CPF",
+        jobPosition: "Cargo",
+        company: "Empresa",
+      };
+
+      // Gera a string de detalhes usando os nomes traduzidos
+      const changes = Object.keys(sanitizedUpdates)
+        .map((key) => {
+          const typedKey = key as keyof Employee;
+          const oldValue = originalEmployee[typedKey] || "vazio";
+          const newValue = sanitizedUpdates[typedKey] || "vazio";
+          const translatedKey = fieldTranslations[typedKey] || typedKey; // Usa a tradução ou o nome original
+          return `Campo "${translatedKey}" alterado de "${oldValue}" para "${newValue}"`;
+        })
+        .join("; ");
+
+      const finalUpdates: Partial<Employee> = { ...sanitizedUpdates };
+      const details = `Dados atualizados: ${changes}.`;
+      const newRecord: HistoryRecord = {
+        type: "EDIÇÃO",
+        details,
+        date: new Date().toISOString(),
+        author: "Admin",
+      };
+
+      const updatedHistory = [...(originalEmployee.history || []), newRecord];
+      finalUpdates.history = updatedHistory;
+
+      await update(employeeRef, finalUpdates);
     },
     [],
   );
@@ -299,30 +381,26 @@ export function useOnboarding() {
   );
 
   const updateModule = useCallback(
-    (moduleId: string, updates: Partial<Module>) => {
-      const newModules = modules.map((module) =>
-        module.id === moduleId ? { ...module, ...updates } : module,
-      );
-      set(ref(database, "modules"), newModules);
+    async (moduleId: string, updates: Partial<Module>) => {
+      await update(ref(database, `modules/${moduleId}`), updates);
     },
-    [modules],
+    [],
   );
 
   const addModule = useCallback(
-    (newModule: Omit<Module, "id">) => {
-      const moduleWithId: Module = { ...newModule, id: Date.now().toString() };
-      const newModules = [...modules, moduleWithId];
-      set(ref(database, "modules"), newModules);
+    async (newModule: Omit<Module, "id">) => {
+      const moduleId = Date.now().toString();
+      const moduleWithId: Module = { ...newModule, id: moduleId };
+      await update(ref(database, `modules/${moduleId}`), moduleWithId);
     },
-    [modules],
+    [],
   );
 
   const deleteModule = useCallback(
-    (moduleId: string) => {
-      const newModules = modules.filter((module) => module.id !== moduleId);
-      set(ref(database, "modules"), newModules);
+    async (moduleId: string) => {
+      await remove(ref(database, `modules/${moduleId}`));
     },
-    [modules],
+    [],
   );
 
   const reorderModules = useCallback((reorderedModules: Module[]) => {

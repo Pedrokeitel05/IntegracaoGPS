@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Employee, Module } from "../types";
 import {
   X,
@@ -25,6 +25,18 @@ export function ViewProgressModal({
   onClose,
 }: ViewProgressModalProps) {
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
 
   if (!isOpen || !employee) {
     return null;
@@ -143,14 +155,18 @@ export function ViewProgressModal({
                 )}
               </div>
               {hasMoreHistory && !isHistoryExpanded && (
-                <div
-                  onClick={() => setIsHistoryExpanded(true)}
-                  className="absolute bottom-0 left-0 right-0 h-16 flex items-end justify-center pb-2 cursor-pointer bg-gradient-to-t from-blue-900 to-transparent"
-                >
-                  <span className="font-semibold text-sm text-blue-300 transition-colors hover:text-white">
-                    Ver mais {reversedHistory.length - 1} registo(s)...
-                  </span>
-                </div>
+                <>
+                  <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-blue-900 to-transparent pointer-events-none z-10" />
+          
+                  <div className="absolute bottom-0 left-0 right-0 h-16 flex items-end justify-center pb-2 z-20">
+                    <button
+                      onClick={() => setIsHistoryExpanded(true)}
+                      className="font-semibold text-sm text-blue-300 transition-colors hover:text-white cursor-pointer"
+                    >
+                      Ver mais {reversedHistory.length - 1} registo(s)...
+                    </button>
+                  </div>
+                </>
               )}
             </div>
             {hasMoreHistory && isHistoryExpanded && (
