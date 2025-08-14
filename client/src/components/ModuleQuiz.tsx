@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Question } from "../types";
-import { ArrowRight, Check, FileText, ArrowLeft } from "lucide-react";
+import { ArrowRight, FileText, ArrowLeft } from "lucide-react";
 
 interface ModuleQuizProps {
   questions: Question[];
@@ -14,14 +14,15 @@ export function ModuleQuiz({
   moduleTitle,
 }: ModuleQuizProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<(number | null)[]>(
+  // Armazenaremos o ID da opção selecionada, em vez do índice
+  const [userAnswers, setUserAnswers] = useState<(string | null)[]>(
     Array(questions.length).fill(null),
   );
   const [showSummary, setShowSummary] = useState(false);
 
-  const handleAnswerSelect = (optionIndex: number) => {
+  const handleAnswerSelect = (optionId: string) => {
     const newAnswers = [...userAnswers];
-    newAnswers[currentQuestionIndex] = optionIndex;
+    newAnswers[currentQuestionIndex] = optionId;
     setUserAnswers(newAnswers);
   };
 
@@ -34,9 +35,11 @@ export function ModuleQuiz({
   };
 
   const handleSubmit = () => {
-    const isCorrect = userAnswers.every(
-      (answer, index) => answer === questions[index]?.correctAnswerIndex,
-    );
+    // Lógica de verificação corrigida
+    const isCorrect = userAnswers.every((answerId, index) => {
+      const question = questions[index];
+      return question && answerId === question.correctOptionId;
+    });
     onQuizComplete(isCorrect);
   };
 
@@ -44,36 +47,35 @@ export function ModuleQuiz({
     setShowSummary(false);
   };
 
-  // --- TELA DE RESUMO CORRIGIDA ---
   if (showSummary) {
     return (
       <div className="text-center text-white animate-fadeInUp">
         <h2 className="text-2xl font-bold mb-2">Resumo da Avaliação</h2>
         <p className="text-blue-200 mb-6">
-          Confirme suas respostas para finalizar.
+          Confirme as suas respostas para finalizar.
         </p>
 
         <div className="space-y-4 text-left max-w-lg mx-auto mb-8">
           {questions.map((q, index) => {
-            const userAnswerIndex = userAnswers[index];
-            const isAnswered = userAnswerIndex !== null;
+            const userAnswerId = userAnswers[index];
+            const selectedOption = q.options?.find(
+              (opt) => opt.id === userAnswerId,
+            );
 
             return (
               <div
                 key={q.id || index}
                 className="p-4 bg-white/5 rounded-lg border border-white/10"
               >
+                {/* Correção 1: Usar `q.text` */}
                 <p className="font-semibold text-white">
-                  {index + 1}.{" "}
-                  {q.questionText || "Texto da pergunta não encontrado."}
+                  {index + 1}. {q.text || "Texto da pergunta não encontrado."}
                 </p>
 
-                {/* Mostra a resposta de forma NEUTRA, sem indicar se está certa ou errada */}
-                {isAnswered ? (
+                {selectedOption ? (
                   <p className="mt-2 flex items-center text-sm text-blue-300">
                     <ArrowRight className="h-5 w-5 mr-2 text-blue-400 flex-shrink-0" />
-                    Sua resposta:{" "}
-                    {q.options?.[userAnswerIndex!]?.text || "Opção inválida"}
+                    Sua resposta: {selectedOption.text || "Opção inválida"}
                   </p>
                 ) : (
                   <p className="mt-2 text-sm text-yellow-400">
@@ -105,7 +107,7 @@ export function ModuleQuiz({
   }
 
   const currentQuestion = questions[currentQuestionIndex];
-  const selectedAnswer = userAnswers[currentQuestionIndex];
+  const selectedAnswerId = userAnswers[currentQuestionIndex];
 
   if (!currentQuestion) {
     return (
@@ -119,9 +121,9 @@ export function ModuleQuiz({
     <div className="animate-fadeInUp">
       <div className="text-center mb-8">
         <FileText className="h-12 w-12 text-blue-400 mx-auto" />
-        {/* CORREÇÃO DO TÍTULO: Agora exibe o texto da pergunta aqui */}
+        {/* Correção 2: Usar `currentQuestion.text` */}
         <h2 className="text-3xl font-bold text-white mt-4">
-          {currentQuestion.questionText || "Carregando pergunta..."}
+          {currentQuestion.text || "Carregando pergunta..."}
         </h2>
         <p className="text-blue-200">
           Pergunta {currentQuestionIndex + 1} de {questions.length}
@@ -129,14 +131,13 @@ export function ModuleQuiz({
       </div>
 
       <div className="bg-white/5 p-6 rounded-xl border border-white/10">
-        {/* O texto da pergunta foi removido daqui e colocado no h2 acima */}
         <div className="space-y-4">
-          {currentQuestion.options?.map((option, index) => (
+          {currentQuestion.options?.map((option) => (
             <button
-              key={option.id || index}
-              onClick={() => handleAnswerSelect(index)}
+              key={option.id}
+              onClick={() => handleAnswerSelect(option.id)}
               className={`w-full text-left p-4 rounded-lg border-2 transition-all text-base ${
-                selectedAnswer === index
+                selectedAnswerId === option.id
                   ? "bg-blue-500 border-blue-300 text-white font-semibold"
                   : "bg-transparent border-white/20 text-blue-100 hover:bg-white/10"
               }`}
@@ -150,7 +151,7 @@ export function ModuleQuiz({
       <div className="mt-8 flex justify-end">
         <button
           onClick={handleNextQuestion}
-          disabled={selectedAnswer === null}
+          disabled={selectedAnswerId === null}
           className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 disabled:opacity-50"
         >
           <span>

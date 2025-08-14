@@ -6,6 +6,7 @@ import {
   Play,
   Pause,
   Maximize,
+  Shrink, // Ícone para sair da tela cheia
   ArrowRight,
 } from "lucide-react";
 
@@ -20,6 +21,22 @@ declare global {
   interface Window {
     YT: any;
     onYouTubeIframeAPIReady: () => void;
+  }
+
+  interface HTMLElement {
+    mozRequestFullScreen?: () => Promise<void>;
+    webkitRequestFullscreen?: () => Promise<void>;
+    msRequestFullscreen?: () => Promise<void>;
+  }
+
+  // Adicionando as versões com prefixo ao Document
+  interface Document {
+    mozCancelFullScreen?: () => Promise<void>;
+    webkitExitFullscreen?: () => Promise<void>;
+    msExitFullscreen?: () => Promise<void>;
+    mozFullScreenElement?: Element;
+    webkitFullscreenElement?: Element;
+    msFullscreenElement?: Element;
   }
 }
 
@@ -36,6 +53,30 @@ export function VideoPlayer({
   const [duration, setDuration] = useState(0);
   const playerRef = useRef<any>(null);
   const [apiReady, setApiReady] = useState(false);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
+
+  // Alteração 1: Adicionar estado para controlar a tela cheia
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Alteração 2: Adicionar um "ouvinte" para mudanças de tela cheia (ex: tecla Esc)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const fullscreenElement =
+        document.fullscreenElement || document.webkitFullscreenElement;
+      setIsFullscreen(!!fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullscreenChange,
+      );
+    };
+  }, []);
 
   useEffect(() => {
     if (!window.YT) {
@@ -122,10 +163,31 @@ export function VideoPlayer({
     }
   };
 
+  // Alteração 3: Lógica completa para entrar e sair da tela cheia
   const handleFullscreen = () => {
-    const iframe = playerRef.current?.getIframe();
-    if (iframe?.requestFullscreen) {
-      iframe.requestFullscreen();
+    if (!isFullscreen) {
+      // Entrar em tela cheia
+      const playerContainer = playerContainerRef.current;
+      if (playerContainer) {
+        const requestFullScreen =
+          playerContainer.requestFullscreen ||
+          playerContainer.webkitRequestFullscreen ||
+          playerContainer.mozRequestFullScreen ||
+          playerContainer.msRequestFullscreen;
+        if (requestFullScreen) {
+          requestFullScreen.call(playerContainer);
+        }
+      }
+    } else {
+      // Sair da tela cheia
+      const exitFullScreen =
+        document.exitFullscreen ||
+        document.webkitExitFullscreen ||
+        document.mozCancelFullScreen ||
+        document.msExitFullscreen;
+      if (exitFullScreen) {
+        exitFullScreen.call(document);
+      }
     }
   };
 
@@ -139,16 +201,15 @@ export function VideoPlayer({
   return (
     <div className="animate-fadeInUp">
       <div className="mb-8">
-        <div className="relative bg-black rounded-2xl overflow-hidden shadow-2xl aspect-video">
+        <div
+          ref={playerContainerRef}
+          className="relative bg-black rounded-2xl overflow-hidden shadow-2xl aspect-video"
+        >
           <div
             id="youtube-player"
             className="absolute top-0 left-0 w-full h-full"
           ></div>
-
-          {/* --- A CAMADA DE PROTEÇÃO ESTÁ AQUI --- */}
           <div className="absolute top-0 left-0 w-full h-full z-10"></div>
-
-          {/* --- E OS SEUS CONTROLES CUSTOMIZADOS ESTÃO AQUI --- */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 sm:p-4 z-20">
             <div className="w-full bg-white/20 rounded-full h-1 sm:h-1.5 mb-2 sm:mb-3">
               <div
@@ -183,12 +244,17 @@ export function VideoPlayer({
                   {formatTime(currentTime)} / {formatTime(duration)}
                 </span>
               </div>
+              {/* Alteração 4: Ícone dinâmico */}
               <button
                 onClick={handleFullscreen}
                 className="text-white hover:text-blue-400 p-1"
-                title="Tela Cheia"
+                title={isFullscreen ? "Sair da Tela Cheia" : "Tela Cheia"}
               >
-                <Maximize className="h-5 w-5 sm:h-6 sm:w-6" />
+                {isFullscreen ? (
+                  <Shrink className="h-5 w-5 sm:h-6 sm:w-6" />
+                ) : (
+                  <Maximize className="h-5 w-5 sm:h-6 sm:w-6" />
+                )}
               </button>
             </div>
           </div>

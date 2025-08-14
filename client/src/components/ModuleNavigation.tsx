@@ -1,10 +1,11 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react"; // Adicionado useEffect
 import {
   ChevronLeft,
   ChevronRight,
   User,
   Calendar,
   LogOut,
+  CheckCircle,
 } from "lucide-react";
 import { Module, Employee } from "../types";
 import { ModuleCard } from "./ModuleCard";
@@ -50,13 +51,28 @@ export function ModuleNavigation({
   const progressPercentage =
     totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
+  const allModulesCompleted = totalCount > 0 && completedCount === totalCount;
+
+  // Alteração 1: Adicionado useEffect para controlar a rolagem da página
+  useEffect(() => {
+    // Se o modal de conclusão estiver visível, desativa a rolagem da página
+    if (allModulesCompleted) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+
+      // Função de limpeza para restaurar a rolagem quando o componente for desmontado
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [allModulesCompleted]);
+
   return (
     <div className="min-h-screen bg-blue-900 relative">
       <div className="bg-black/20 backdrop-blur-lg border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center space-x-4">
-              {/* LOGO REMOVIDA DAQUI */}
               <div className="text-center sm:text-left">
                 <h1 className="text-xl sm:text-2xl font-bold text-white">
                   Progresso da Integração
@@ -154,7 +170,6 @@ export function ModuleNavigation({
             </p>
           </div>
 
-          {/* LOGO AJUSTADA AQUI */}
           <div className="mt-8 flex justify-center">
             <img
               src="/GPA BRANCO.png"
@@ -164,13 +179,29 @@ export function ModuleNavigation({
           </div>
         </div>
       </div>
-      {completedCount === totalCount && (
-        <div className="fixed bottom-4 sm:bottom-8 right-4 sm:right-8 bg-gradient-to-r from-green-600 to-green-500 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl shadow-2xl">
-          <div className="flex items-center space-x-3">
-            <div className="w-3 h-3 bg-green-300 rounded-full animate-pulse"></div>
-            <span className="font-semibold text-sm sm:text-base">
-              Integração Concluída!
-            </span>
+
+      {allModulesCompleted && (
+        <div className="fixed inset-0 bg-blue-900/90 backdrop-blur-lg flex items-center justify-center z-20 animate-fadeInUp">
+          <div className="text-center bg-white/10 border border-white/20 rounded-2xl p-8 max-w-lg mx-4">
+            <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" />
+            <h2 className="text-3xl font-bold text-white mb-3">
+              Parabéns, {employee.fullName}!
+            </h2>
+            <p className="text-blue-200 mb-6">
+              Você concluiu com sucesso todas as etapas da sua integração.
+            </p>
+            <p className="text-white font-semibold mb-8">
+              O departamento de Recursos Humanos (RH) já foi notificado. Por
+              favor, aguarde o contacto para receber as próximas instruções.
+            </p>
+            {/* Alteração 2: Adicionado mx-auto para garantir a centralização */}
+            <button
+              onClick={onLogout}
+              className="group bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2 mx-auto"
+            >
+              <span>Finalizar e Sair</span>
+              <LogOut className="h-5 w-5" />
+            </button>
           </div>
         </div>
       )}

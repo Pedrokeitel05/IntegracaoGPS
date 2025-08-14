@@ -1,0 +1,20 @@
+{
+  "short_name": "Integração GPS",
+  "name": "Plataforma de Integração GPS",
+  "icons": [
+    {
+      "src": "/GPA BRANCO.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/GPA BRANCO.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#1e3a8a",
+  "background_color": "#1e3a8a"
+}
