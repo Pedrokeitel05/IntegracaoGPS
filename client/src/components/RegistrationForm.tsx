@@ -21,6 +21,7 @@ export function RegistrationForm({ onSubmit, onBack }: RegistrationFormProps) {
     jobPosition: "" as JobPosition,
     company: "" as Company,
   });
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,7 +79,8 @@ export function RegistrationForm({ onSubmit, onBack }: RegistrationFormProps) {
     formData.fullName &&
     formData.cpf.length === 14 &&
     formData.jobPosition &&
-    formData.company;
+    formData.company &&
+    termsAccepted;
 
   return (
     <div className="min-h-screen bg-blue-900 flex items-center justify-center p-4">
@@ -150,7 +152,11 @@ export function RegistrationForm({ onSubmit, onBack }: RegistrationFormProps) {
                   Selecione seu cargo
                 </option>
                 {JOB_POSITIONS.map((position) => (
-                  <option key={position} value={position} className="bg-slate-800">
+                  <option
+                    key={position}
+                    value={position}
+                    className="bg-slate-800"
+                  >
                     {position}
                   </option>
                 ))}
@@ -177,12 +183,50 @@ export function RegistrationForm({ onSubmit, onBack }: RegistrationFormProps) {
                   Selecione sua empresa
                 </option>
                 {COMPANIES.map((company) => (
-                  <option key={company} value={company} className="bg-slate-800">
+                  <option
+                    key={company}
+                    value={company}
+                    className="bg-slate-800"
+                  >
                     {company}
                   </option>
                 ))}
               </select>
             </div>
+
+            {/* Início da Seção Adicionada */}
+            <div className="pt-2">
+              <label className="flex items-start space-x-3 cursor-pointer group">
+                <div className="relative flex items-center">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    disabled={isSubmitted}
+                    className="peer absolute h-5 w-5 opacity-0"
+                  />
+                  <div className="h-5 w-5 mt-0.5 rounded-md border-2 border-blue-400 bg-transparent transition-all duration-300 group-hover:border-blue-300 peer-checked:bg-blue-400 peer-checked:border-transparent flex items-center justify-center flex-shrink-0">
+                    <svg
+                      className="w-3 h-3 text-blue-900 hidden peer-checked:block"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </div>
+                </div>
+                <span className="text-white text-sm group-hover:text-blue-200 transition-colors">
+                  Declaro que todas as informações fornecidas no cabeçalho são verdadeiras, que realizarei a integração e as avaliações propostas, comprometendo-me a não compartilhá-lo com terceiros.
+                </span>
+              </label>
+            </div>
+
             <div className="bg-blue-900/30 rounded-xl p-4 border border-blue-500/30">
               <div className="flex items-center text-blue-200 text-sm">
                 <Calendar className="h-4 w-4 mr-2" />
